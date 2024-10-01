@@ -13,7 +13,7 @@ pipeline {
                 sh 'mvn clean install'
             }
         }
-
+    }
 
     post {
         always {
