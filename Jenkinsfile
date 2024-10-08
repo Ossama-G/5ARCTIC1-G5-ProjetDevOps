@@ -4,7 +4,7 @@ pipeline {
     stages {
         stage('Checkout') {
             steps {
-                git branch: 'Oussama-5ARCTIC1-G5', credentialsId: 'jenkins-Github', url: 'https://github.com/Ossama-G/5ARCTIC1-G5-ProjetDevOps.git'
+                git branch: 'Oussama-5ARCTIC1-G5', credentialsId: 'Github-Cred', url: 'https://github.com/Ossama-G/5ARCTIC1-G5-ProjetDevOps.git'
             }
         }
 
