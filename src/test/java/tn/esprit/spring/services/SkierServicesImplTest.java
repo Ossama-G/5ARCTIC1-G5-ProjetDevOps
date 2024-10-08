@@ -9,6 +9,7 @@ import tn.esprit.spring.entities.*;
 import tn.esprit.spring.repositories.*;
 
 import java.util.Optional;
+import java.util.Set; // Add this import
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
@@ -83,6 +84,7 @@ class SkierServicesImplTest {
         assertEquals(skier, result);
         verify(skierRepository, times(1)).findById(1L);
     }
+
     @Test
     void testAddSkierAndAssignToCourse() {
         Skier skier = new Skier();
@@ -118,5 +120,4 @@ class SkierServicesImplTest {
         skierServices.retrieveSkiersBySubscriptionType(typeSubscription);
         verify(skierRepository, times(1)).findBySubscription_TypeSub(typeSubscription);
     }
-
 }
