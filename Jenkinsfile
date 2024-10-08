@@ -12,14 +12,10 @@ pipeline {
                 sh 'mvn clean compile'
             }
         }
-        stage('SonarQube ') {
-            environment {
-                SONAR_LOGIN = 'admin'
-                SONAR_PASSWORD = 'abmahmed1099-'
-            }
+        stage('SonarQube') {
             steps {
-                withCredentials([usernamePassword(credentialsId: 'sonar-credentials', usernameVariable: 'SONAR_LOGIN', passwordVariable: 'SONAR_PASSWORD')]) {
-                    sh 'mvn sonar:sonar -Dsonar.login=$SONAR_LOGIN -Dsonar.password=$SONAR_PASSWORD'
+                withCredentials([string(credentialsId: 'sonar-token', variable: 'SONAR_TOKEN')]) {
+                    sh 'mvn sonar:sonar -Dsonar.login=$SONAR_TOKEN'
                 }
             }
         }
