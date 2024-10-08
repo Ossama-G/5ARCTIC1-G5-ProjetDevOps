@@ -12,12 +12,28 @@ pipeline {
                 sh 'mvn clean compile'
             }
         }
+        stage('Test') {
+            steps {
+                sh 'mvn test'
+            }
+        }
         stage('SonarQube') {
             steps {
                 withCredentials([string(credentialsId: 'sonar-token', variable: 'SONAR_TOKEN')]) {
                     sh 'mvn sonar:sonar -Dsonar.login=$SONAR_TOKEN'
                 }
             }
+        }
+        stage('JaCoCo Report') {
+            steps {
+                sh 'mvn jacoco:report'
+            }
+        }
+    }
+    post {
+        always {
+            junit '**/target/surefire-reports/*.xml'
+            jacoco execPattern: '**/target/jacoco.exec'
         }
     }
 }
