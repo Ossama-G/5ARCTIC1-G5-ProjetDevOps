@@ -46,6 +46,7 @@ class SkierServicesImplTest {
         Skier skier = new Skier();
         Subscription subscription = new Subscription();
         subscription.setTypeSub(TypeSubscription.ANNUAL); // Set a valid subscription type
+        subscription.setStartDate(LocalDate.now()); // Set a valid start date
         skier.setSubscription(subscription); // Set the subscription in the skier
 
         when(skierRepository.save(skier)).thenReturn(skier);
