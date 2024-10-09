@@ -48,7 +48,7 @@ public class SkierServicesImpl implements ISkierServices {
             skier.setSubscription(subscription);
             return skierRepository.save(skier);
         }
-        return null;
+        return null; // Ensure this is reached only if skier or subscription is null
     }
 
     @Override
