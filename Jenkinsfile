@@ -17,18 +17,19 @@ pipeline {
         stage('SonarQube analysis') {
             steps {
                 withSonarQubeEnv('sonar-scanner') {
-                   sh 'mvn sonar:sonar'
+                    sh 'mvn sonar:sonar'
                 }
             }
         }
 
         stage('Quality Gate') {
-             steps {
-                 script {
-                      waitForQualityGate abortPipeline: false
-                    }
-             }
+            steps {
+                script {
+                    waitForQualityGate abortPipeline: false
+                }
+            }
         }
+    }
 
     post {
         always {
