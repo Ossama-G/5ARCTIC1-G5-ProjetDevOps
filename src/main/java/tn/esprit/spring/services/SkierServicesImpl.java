@@ -14,15 +14,10 @@ import java.util.Set;
 public class SkierServicesImpl implements ISkierServices {
 
     private ISkierRepository skierRepository;
-
     private IPisteRepository pisteRepository;
-
     private ICourseRepository courseRepository;
-
     private IRegistrationRepository registrationRepository;
-
     private ISubscriptionRepository subscriptionRepository;
-
 
     @Override
     public List<Skier> retrieveAllSkiers() {
@@ -49,8 +44,11 @@ public class SkierServicesImpl implements ISkierServices {
     public Skier assignSkierToSubscription(Long numSkier, Long numSubscription) {
         Skier skier = skierRepository.findById(numSkier).orElse(null);
         Subscription subscription = subscriptionRepository.findById(numSubscription).orElse(null);
-        skier.setSubscription(subscription);
-        return skierRepository.save(skier);
+        if (skier != null && subscription != null) {
+            skier.setSubscription(subscription);
+            return skierRepository.save(skier);
+        }
+        return null;
     }
 
     @Override
@@ -80,15 +78,17 @@ public class SkierServicesImpl implements ISkierServices {
     public Skier assignSkierToPiste(Long numSkieur, Long numPiste) {
         Skier skier = skierRepository.findById(numSkieur).orElse(null);
         Piste piste = pisteRepository.findById(numPiste).orElse(null);
-        try {
-            skier.getPistes().add(piste);
-        } catch (NullPointerException exception) {
-            Set<Piste> pisteList = new HashSet<>();
-            pisteList.add(piste);
-            skier.setPistes(pisteList);
+        if (skier != null && piste != null) {
+            try {
+                skier.getPistes().add(piste);
+            } catch (NullPointerException exception) {
+                Set<Piste> pisteList = new HashSet<>();
+                pisteList.add(piste);
+                skier.setPistes(pisteList);
+            }
+            return skierRepository.save(skier);
         }
-
-        return skierRepository.save(skier);
+        return null;
     }
 
     @Override
