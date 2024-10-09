@@ -8,6 +8,7 @@ import org.mockito.MockitoAnnotations;
 import tn.esprit.spring.entities.*;
 import tn.esprit.spring.repositories.*;
 
+import java.time.LocalDate;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -40,6 +41,7 @@ public class SkierServicesImplTest {
         Skier skier = new Skier();
         Subscription subscription = new Subscription();
         subscription.setTypeSub(TypeSubscription.ANNUAL);
+        subscription.setStartDate(LocalDate.now()); // Ensure startDate is set
         skier.setSubscription(subscription);
 
         when(skierRepository.save(any(Skier.class))).thenReturn(skier);
@@ -59,6 +61,7 @@ public class SkierServicesImplTest {
         when(subscriptionRepository.findById(anyLong())).thenReturn(Optional.of(subscription));
 
         Skier result = skierServices.assignSkierToSubscription(1L, 1L);
+        assertNotNull(result); // Ensure result is not null
         assertEquals(subscription, result.getSubscription());
         verify(skierRepository, times(1)).save(skier);
     }
