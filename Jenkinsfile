@@ -21,10 +21,11 @@ pipeline {
             }
         }
 
-        stage('Build and Test') {
+        stage("Build Application"){
             steps {
-                sh 'mvn clean test jacoco:report'
+                sh "mvn clean package"
             }
+
         }
     }
 
