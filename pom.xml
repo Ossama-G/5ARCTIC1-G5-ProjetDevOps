@@ -68,7 +68,16 @@
 			<scope>test</scope>
 		</dependency>
 	</dependencies>
-
+	<distributionManagement>
+		<repository>
+			<id>nexus</id>
+			<url>http://localhost:8081/repository/maven-releases/</url>
+		</repository>
+		<snapshotRepository>
+			<id>nexus</id>
+			<url>http://localhost:8081/repository/maven-snapshots/</url>
+		</snapshotRepository>
+	</distributionManagement>
 	<build>
 		<plugins>
 			<!-- Spring Boot Maven Plugin -->
@@ -84,7 +93,15 @@
 					</excludes>
 				</configuration>
 			</plugin>
-
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-deploy-plugin</artifactId>
+				<version>2.8.2</version>
+				<configuration>
+					<repositoryId>nexus</repositoryId>
+					<url>http://localhost:8081/repository/maven-releases/</url>
+				</configuration>
+			</plugin>
 			<!-- JaCoCo Maven Plugin for Test Coverage -->
 			<plugin>
 				<groupId>org.jacoco</groupId>
