@@ -1,10 +1,6 @@
 pipeline {
     agent any
 
-    triggers {
-        pollSCM('H/5 * * * *')  // Jenkins will check every 5 minutes for changes
-    }
-
     stages {
         stage('Checkout') {
             steps {
