@@ -133,8 +133,8 @@ public class InstructorServicesImplTest {
 
         Instructor result = instructorServices.addInstructorAndAssignToCourse(instructor, courseId);
 
-        assertNull(result);
+        assertNull(result); // Vérifie que l'instructeur n'est pas sauvegardé
         verify(courseRepository, times(1)).findById(courseId);
-        verify(instructorRepository, times(0)).save(instructor);
+        verify(instructorRepository, never()).save(instructor); // Assure que save n'est jamais appelé
     }
 }
