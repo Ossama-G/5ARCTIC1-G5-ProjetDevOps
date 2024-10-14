@@ -2,6 +2,7 @@ pipeline {
     agent any
     triggers {
             githubPush()
+            githubPullRequest()
     }
 
     stages {
@@ -14,6 +15,12 @@ pipeline {
         stage('Compile') {
             steps {
                 sh 'mvn clean compile'
+            }
+        }
+
+        stage('Unit Tests') {
+            steps {
+                sh 'mvn test'
             }
         }
 
@@ -30,6 +37,12 @@ pipeline {
                 script {
                     waitForQualityGate abortPipeline: false
                 }
+            }
+        }
+
+        stage('Code Coverage Report') {
+            steps {
+                sh 'mvn jacoco:report'
             }
         }
     }
