@@ -41,11 +41,14 @@ public class InstructorServicesImpl implements IInstructorServices{
     @Override
     public Instructor addInstructorAndAssignToCourse(Instructor instructor, Long numCourse) {
         Course course = courseRepository.findById(numCourse).orElse(null);
+        if (course == null) {
+            // Si le cours n'existe pas, on ne fait rien et on retourne null
+            return null;
+        }
+        // Si le cours existe, on continue l'ajout à l'instructeur
         Set<Course> courseSet = new HashSet<>();
         courseSet.add(course);
         instructor.setCourses(courseSet);
         return instructorRepository.save(instructor);
     }
-
-
 }
