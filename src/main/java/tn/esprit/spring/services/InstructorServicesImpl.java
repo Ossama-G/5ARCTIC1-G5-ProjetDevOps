@@ -9,6 +9,7 @@ import tn.esprit.spring.repositories.IInstructorRepository;
 
 import java.util.HashSet;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 
 @AllArgsConstructor
@@ -40,10 +41,17 @@ public class InstructorServicesImpl implements IInstructorServices{
 
     @Override
     public Instructor addInstructorAndAssignToCourse(Instructor instructor, Long numCourse) {
-        Course course = courseRepository.findById(numCourse).orElse(null);
+        Optional<Course> courseOpt = courseRepository.findById(numCourse);
+
+        if (!courseOpt.isPresent()) {
+            return null; // Don't save the instructor if the course doesn't exist
+        }
+
+        Course course = courseOpt.get();
         Set<Course> courseSet = new HashSet<>();
         courseSet.add(course);
         instructor.setCourses(courseSet);
+
         return instructorRepository.save(instructor);
     }
 

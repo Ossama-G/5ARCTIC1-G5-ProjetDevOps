@@ -107,22 +107,17 @@ class InstructorServicesImplTest {
 
     @Test
     void testAddInstructorAndAssignToCourse() {
-        Long courseId = 1L;
-        Course course = new Course();
-        course.setNumCourse(courseId);
-
+        Long courseId = 99L;
         Instructor instructor = new Instructor();
         instructor.setFirstName("John");
 
-        when(courseRepository.findById(courseId)).thenReturn(Optional.of(course));
-        when(instructorRepository.save(instructor)).thenReturn(instructor);
+        when(courseRepository.findById(courseId)).thenReturn(Optional.empty());
 
         Instructor result = instructorServices.addInstructorAndAssignToCourse(instructor, courseId);
 
-        assertNotNull(result);
-        assertTrue(result.getCourses().contains(course));
+        assertNull(result); // Verifies that the method returns null when the course doesn't exist
         verify(courseRepository, times(1)).findById(courseId);
-        verify(instructorRepository, times(1)).save(instructor);
+        verify(instructorRepository, never()).save(instructor);
     }
 
     @Test
