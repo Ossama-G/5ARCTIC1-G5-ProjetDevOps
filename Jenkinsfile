@@ -51,6 +51,12 @@ pipeline {
                 }
             }
         }
+
+         stage('Code Coverage Report') {
+            steps {
+                sh 'mvn jacoco:report'
+            }
+        }
     }
 
     post {
