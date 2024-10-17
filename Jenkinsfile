@@ -5,6 +5,11 @@ pipeline {
         jdk 'Java17'
         maven 'Maven3'
     }
+    environment {
+        DOCKER_IMAGE = 'gestion-station-ski'
+        DOCKER_TAG = "latest"
+
+    }
 
     stages {
         stage("Cleanup Workspace"){
@@ -57,6 +62,15 @@ pipeline {
                 sh 'mvn jacoco:report'
             }
         }
+
+        stage('Build Docker Image') {
+            steps {
+                script {
+                    sh "docker build -t ${DOCKER_IMAGE}:${DOCKER_TAG} ."
+                }
+            }
+        }
+
     }
 
     post {
