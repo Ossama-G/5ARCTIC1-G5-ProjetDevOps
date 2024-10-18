@@ -63,11 +63,16 @@ pipeline {
             }
         }
 
-        stage('Build Docker Image') {
+//         stage('Build Docker Image') {
+//             steps {
+//                 script {
+//                     sh "docker build -t ${DOCKER_IMAGE}:${DOCKER_TAG} ."
+//                 }
+//             }
+//         }
+        stage('Deploy to Nexus') {
             steps {
-                script {
-                    sh "docker build -t ${DOCKER_IMAGE}:${DOCKER_TAG} ."
-                }
+                sh 'mvn deploy -Dnexus.login=admin -Dnexus.password=admin'
             }
         }
 
