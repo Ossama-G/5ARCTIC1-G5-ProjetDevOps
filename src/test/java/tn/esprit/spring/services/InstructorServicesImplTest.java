@@ -4,6 +4,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.modelmapper.ModelMapper;
 import org.mockito.MockitoAnnotations;
 import tn.esprit.spring.entities.Course;
 import tn.esprit.spring.entities.Instructor;
@@ -26,6 +27,9 @@ class InstructorServicesImplTest {
 
     @InjectMocks
     private InstructorServicesImpl instructorServices;
+
+    @Mock
+    private ModelMapper modelMapper;
 
     @BeforeEach
     void setUp() {
