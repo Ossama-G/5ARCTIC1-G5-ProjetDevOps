@@ -45,12 +45,13 @@ pipeline {
             }
         }
 
-        stage ('Deploy to Nexus'){
+        stage('Deploy to Nexus') {
             steps {
-                sh 'mvn deploy -Dnexus.login=admin -Dnexus.password=nexus'
+                withMaven(globalMavenSettingsConfig: 'global-settings', jdk: 'jdk17', maven: 'maven3') {
+                    sh 'mvn deploy'
+                }
             }
         }
-
     }
 
     post {
