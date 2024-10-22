@@ -123,11 +123,9 @@ class InstructorServicesImplTest {
 
         assertNotNull(result);
         assertTrue(result.getCourses().contains(course));
+        assertEquals(instructor, course.getInstructor()); // Vérifie que la relation est bidirectionnelle
         verify(courseRepository, times(1)).findById(courseId);
         verify(instructorRepository, times(1)).save(instructor);
-
-        // Assurer que la relation est bien bidirectionnelle
-        assertEquals(instructor, course.getInstructor()); // Vérifie que le cours a l'instructeur
     }
 
     @Test

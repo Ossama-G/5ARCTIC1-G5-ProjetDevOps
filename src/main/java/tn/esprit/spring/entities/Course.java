@@ -1,4 +1,3 @@
-
 package tn.esprit.spring.entities;
 
 import java.io.Serializable;
@@ -16,11 +15,11 @@ import lombok.experimental.FieldDefaults;
 @Setter
 @AllArgsConstructor
 @NoArgsConstructor
-@FieldDefaults(level=AccessLevel.PRIVATE)
+@FieldDefaults(level = AccessLevel.PRIVATE)
 @Entity
 public class Course implements Serializable {
 	@Id
-	@GeneratedValue(strategy=GenerationType.IDENTITY)
+	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	Long numCourse;
 	int level;
 
@@ -34,10 +33,10 @@ public class Course implements Serializable {
 	int timeSlot;
 
 	@JsonIgnore
-	@OneToMany(mappedBy= "course")
+	@OneToMany(mappedBy = "course")
 	private Set<Registration> registrations;
 
-	@ManyToOne(cascade = CascadeType.ALL)
+	@ManyToOne
 	@JoinColumn(name = "instructor_id")
 	private Instructor instructor;
 }
