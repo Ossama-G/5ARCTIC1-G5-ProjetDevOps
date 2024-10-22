@@ -4,8 +4,8 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.modelmapper.ModelMapper;
 import org.mockito.MockitoAnnotations;
+import org.modelmapper.ModelMapper;
 import tn.esprit.spring.entities.Course;
 import tn.esprit.spring.entities.Instructor;
 import tn.esprit.spring.repositories.ICourseRepository;
@@ -38,7 +38,7 @@ class InstructorServicesImplTest {
 
     @Test
     void testAddInstructor() {
-        Instructor instructor = new Instructor(null, "John", "Doe", LocalDate.now(), null);
+        Instructor instructor = new Instructor(null, "John", "Doe", LocalDate.now(), new HashSet<>());
         when(instructorRepository.save(instructor)).thenReturn(instructor);
 
         Instructor result = instructorServices.addInstructor(instructor);
@@ -51,7 +51,7 @@ class InstructorServicesImplTest {
     @Test
     void testRetrieveInstructor() {
         Long instructorId = 1L;
-        Instructor instructor = new Instructor(instructorId, "Jane", "Doe", LocalDate.now(), null);
+        Instructor instructor = new Instructor(instructorId, "Jane", "Doe", LocalDate.now(), new HashSet<>());
         when(instructorRepository.findById(instructorId)).thenReturn(Optional.of(instructor));
 
         Instructor result = instructorServices.retrieveInstructor(instructorId);
@@ -75,8 +75,8 @@ class InstructorServicesImplTest {
     @Test
     void testRetrieveAllInstructors() {
         List<Instructor> instructors = Arrays.asList(
-                new Instructor(1L, "John", "Doe", LocalDate.now(), null),
-                new Instructor(2L, "Jane", "Smith", LocalDate.now(), null)
+                new Instructor(1L, "John", "Doe", LocalDate.now(), new HashSet<>()),
+                new Instructor(2L, "Jane", "Smith", LocalDate.now(), new HashSet<>())
         );
         when(instructorRepository.findAll()).thenReturn(instructors);
 
@@ -98,7 +98,7 @@ class InstructorServicesImplTest {
 
     @Test
     void testUpdateInstructor() {
-        Instructor instructor = new Instructor(1L, "John", "Smith", LocalDate.now(), null);
+        Instructor instructor = new Instructor(1L, "John", "Smith", LocalDate.now(), new HashSet<>());
         when(instructorRepository.save(instructor)).thenReturn(instructor);
 
         Instructor result = instructorServices.updateInstructor(instructor);
@@ -115,6 +115,7 @@ class InstructorServicesImplTest {
 
         Instructor instructor = new Instructor();
         instructor.setFirstName("John");
+        instructor.setCourses(new HashSet<>());
 
         when(courseRepository.findById(courseId)).thenReturn(Optional.of(course));
         when(instructorRepository.save(instructor)).thenReturn(instructor);
@@ -123,6 +124,7 @@ class InstructorServicesImplTest {
 
         assertNotNull(result);
         assertTrue(result.getCourses().contains(course));
+        assertEquals(instructor, course.getInstructor()); // Vérifie que l'instructeur est bien assigné au cours
         verify(courseRepository, times(1)).findById(courseId);
         verify(instructorRepository, times(1)).save(instructor);
     }
