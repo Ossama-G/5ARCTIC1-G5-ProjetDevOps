@@ -72,8 +72,8 @@ pipeline {
                     // Add a delay to allow the application to start
                     sleep(time: 30, unit: 'SECONDS')
 
-                    // Check if Prometheus is running with verbose output
-                    def prometheusResponse = sh(script: "curl -v -s -o /dev/null -w '%{http_code}' http://localhost:9090", returnStdout: true).trim()
+                    // Check if Prometheus is running and follow redirects
+                    def prometheusResponse = sh(script: "curl -L -s -o /dev/null -w '%{http_code}' http://localhost:9090", returnStdout: true).trim()
                     echo "Prometheus response: ${prometheusResponse}"
                     if (prometheusResponse != '200') {
                         error "Prometheus check failed with status code ${prometheusResponse}"
