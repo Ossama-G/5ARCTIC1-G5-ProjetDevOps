@@ -66,21 +66,22 @@ pipeline {
                 }
             }
         }
-stage('Monitoring') {
-    steps {
-        script {
-            // Health check for the Spring Boot application
-            def response = sh(script: "curl -s -o /dev/null -w '%{http_code}' http://localhost:8089/actuator/health", returnStdout: true).trim()
-            if (response != '200') {
-                error "Health check failed with status code ${response}"
+        stage('Monitoring') {
+            steps {
+                script {
+                    // Health check for the Spring Boot application
+                    def response = sh(script: "curl -s -o /dev/null -w '%{http_code}' http://localhost:8089/actuator/health", returnStdout: true).trim()
+                    if (response != '200') {
+                        error "Health check failed with status code ${response}"
+                    }
+                }
+                dir('/home/ahmedbm') {
+                    // Fetch the last 100 lines of logs for monitoring
+                    sh 'docker-compose logs --tail=100'
+                }
             }
         }
-        dir('/home/ahmedbm') {
-            // Fetch the last 100 lines of logs for monitoring
-            sh 'docker-compose logs --tail=100'
-        }
     }
-}
     post {
         always {
             junit '**/target/surefire-reports/*.xml'
