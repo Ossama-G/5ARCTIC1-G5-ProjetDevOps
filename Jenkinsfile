@@ -6,7 +6,11 @@ pipeline {
         maven 'Maven3'
     }
     environment {
-        DOCKER_IMAGE = 'gestion-station-ski'
+        APP_NAME = "devopsproject-prodcution-e2e-pipeline"
+        RELEASE = "1.0.0"
+        DOCKER_USER = "47746"
+        DOCKER_PASS = 'dockerhub'
+        DOCKER_IMAGE = '${DOCKER_USER}" + "/" + "${APP_NAME}'
         DOCKER_TAG = "latest"
 
     }
@@ -62,20 +66,28 @@ pipeline {
                 sh 'mvn jacoco:report'
             }
         }
-
-//         stage('Build Docker Image') {
-//             steps {
-//                 script {
-//                     sh "docker build -t ${DOCKER_IMAGE}:${DOCKER_TAG} ."
-//                 }
-//             }
-//         }
         stage('Deploy to Nexus') {
             steps {
                 withCredentials([usernamePassword(credentialsId: 'nexus-credentials', usernameVariable: 'NEXUS_USER', passwordVariable: 'NEXUS_PASS')]) {
                     sh 'mvn deploy -Dnexus.login=$NEXUS_USER -Dnexus.password=$NEXUS_PASS'
                 }
             }
+        }
+
+        stage("Build & Push Docker Image") {
+            steps {
+                script {
+                    docker.withRegistry('',DOCKER_PASS) {
+                        docker_image = docker.build "${IMAGE_NAME}"
+                    }
+
+                    docker.withRegistry('',DOCKER_PASS) {
+                        docker_image.push("${IMAGE_TAG}")
+                        docker_image.push('latest')
+                    }
+                }
+            }
+
         }
     }
 
