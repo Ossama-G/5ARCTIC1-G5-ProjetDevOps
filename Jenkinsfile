@@ -6,13 +6,12 @@ pipeline {
         maven 'Maven3'
     }
     environment {
-        APP_NAME = "devopsproject-prodcution-e2e-pipeline"
+        APP_NAME = "devopsproject-production-e2e-pipeline"
         RELEASE = "1.0.0"
         DOCKER_USER = "47746"
         DOCKER_PASS = 'dockerhub'
-        IMAGE_NAME = '${DOCKER_USER}" + "/" + "${APP_NAME}'
+        IMAGE_NAME = "${DOCKER_USER}/${APP_NAME}"
         IMAGE_TAG = "latest"
-
     }
 
     stages {
