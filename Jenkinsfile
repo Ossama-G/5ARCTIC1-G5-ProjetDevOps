@@ -69,8 +69,11 @@ pipeline {
         stage('Monitoring') {
             steps {
                 script {
+                    // Add a delay to allow the application to start
+                    sleep(time: 30, unit: 'SECONDS')
+
                     // Health check for the Spring Boot application
-                    def response = sh(script: "curl -s -o /dev/null -w '%{http_code}' http://localhost:8089/actuator/health", returnStdout: true).trim()
+                    def response = sh(script: "curl -s -o /dev/null -w '%{http_code}' http://localhost:8089/api/actuator/health", returnStdout: true).trim()
                     echo "Health check response: ${response}"
                     if (response != '200') {
                         error "Health check failed with status code ${response}"
