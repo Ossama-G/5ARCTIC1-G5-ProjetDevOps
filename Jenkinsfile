@@ -71,6 +71,7 @@ pipeline {
                 script {
                     // Health check for the Spring Boot application
                     def response = sh(script: "curl -s -o /dev/null -w '%{http_code}' http://localhost:8089/actuator/health", returnStdout: true).trim()
+                    echo "Health check response: ${response}"
                     if (response != '200') {
                         error "Health check failed with status code ${response}"
                     }
@@ -88,19 +89,21 @@ pipeline {
             jacoco execPattern: '**/target/jacoco.exec', classPattern: '**/classes', sourcePattern: '**/src/main/java', exclusionPattern: '**/src/test*'
             // Remove the docker-compose down command to keep the containers running
         }
-        success {
-            emailext(
-                subject: "Jenkins Build Successful: ${env.JOB_NAME} #${env.BUILD_NUMBER}",
-                body: "Good news! The build was successful.\n\nJob: ${env.JOB_NAME}\nBuild Number: ${env.BUILD_NUMBER}\n\nCheck the details at: ${env.BUILD_URL}",
-                to: 'ahmed.belhajmohamed@esprit.tn'
-            )
-        }
-        failure {
-            emailext(
-                subject: "Jenkins Build Failed: ${env.JOB_NAME} #${env.BUILD_NUMBER}",
-                body: "Unfortunately, the build failed.\n\nJob: ${env.JOB_NAME}\nBuild Number: ${env.BUILD_NUMBER}\n\nCheck the details at: ${env.BUILD_URL}",
-                to: 'ahmed.belhajmohamed@esprit.tn'
-            )
-        }
-    }
-}
+         success {
+                   emailext(
+                       subject: "Jenkins Build Successful: ${env.JOB_NAME} #${env.BUILD_NUMBER}",
+                       body: "Good news! The build was successful.\n\nJob: ${env.JOB_NAME}\nBuild Number: ${env.BUILD_NUMBER}\n\nCheck the details at: ${env.BUILD_URL}",
+                       to: 'ahmed.belhajmohamed@esprit.tn',
+                       from: 'ahmed.belhajmohamed@esprit.tn'
+                   )
+               }
+               failure {
+                   emailext(
+                       subject: "Jenkins Build Failed: ${env.JOB_NAME} #${env.BUILD_NUMBER}",
+                       body: "Unfortunately, the build failed.\n\nJob: ${env.JOB_NAME}\nBuild Number: ${env.BUILD_NUMBER}\n\nCheck the details at: ${env.BUILD_URL}",
+                       to: 'ahmed.belhajmohamed@esprit.tn',
+                       from: 'ahmed.belhajmohamed@esprit.tn'
+                   )
+               }
+           }
+       }
