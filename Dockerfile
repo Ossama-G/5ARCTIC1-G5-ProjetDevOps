@@ -7,6 +7,6 @@ RUN mvn clean package -DskipTests
 # Stage 2: Run the application
 FROM eclipse-temurin:17.0.6_10-jdk
 WORKDIR /app
-COPY --from=build /app/target/gestion-station-ski-1.3.jar /app/
+COPY --from=build /app/target/gestion-station-ski-1.4.jar /app/
 EXPOSE 8080
-CMD ["java", "-jar", "gestion-station-ski-1.3.jar"]
+CMD ["java", "-jar", "gestion-station-ski-1.4.jar"]

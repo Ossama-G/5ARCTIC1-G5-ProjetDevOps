@@ -18,7 +18,7 @@ services:
     depends_on:
       - mysql
     ports:
-      - "8089:8080"  # Changed to avoid conflict
+      - "8089:8080"
     environment:
       SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/devopsDatabase
       SPRING_DATASOURCE_USERNAME: ahmed
@@ -26,8 +26,6 @@ services:
 
   prometheus:
     image: prom/prometheus:latest
-    volumes:
-      - ./prometheus.yml:/etc/prometheus/prometheus.yml
     ports:
       - "9090:9090"
 
