@@ -18,7 +18,7 @@ services:
     depends_on:
       - mysql
     ports:
-      - "8080:8080"
+      - "8089:8080"  # Changed to avoid conflict
     environment:
       SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/devopsDatabase
       SPRING_DATASOURCE_USERNAME: ahmed
