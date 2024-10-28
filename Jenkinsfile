@@ -66,19 +66,33 @@ pipeline {
                 }
             }
         }
-        stage('Monitoring with grafana and prometheus') {
+        stage('Monitoring') {
             steps {
                 dir('/home/ahmedbm') {
-                    sh 'docker-compose up -d prometheus grafana'
+                    sh 'docker-compose logs -f'
                 }
             }
         }
     }
- post {
+    post {
         always {
             junit '**/target/surefire-reports/*.xml'
             jacoco execPattern: '**/target/jacoco.exec', classPattern: '**/classes', sourcePattern: '**/src/main/java', exclusionPattern: '**/src/test*'
             // Remove the docker-compose down command to keep the containers running
+        }
+        success {
+            emailext(
+                subject: "Jenkins Build Successful: ${env.JOB_NAME} #${env.BUILD_NUMBER}",
+                body: "Good news! The build was successful.\n\nJob: ${env.JOB_NAME}\nBuild Number: ${env.BUILD_NUMBER}\n\nCheck the details at: ${env.BUILD_URL}",
+                to: 'ahmed.belhajmohamed@esprit.tn'
+            )
+        }
+        failure {
+            emailext(
+                subject: "Jenkins Build Failed: ${env.JOB_NAME} #${env.BUILD_NUMBER}",
+                body: "Unfortunately, the build failed.\n\nJob: ${env.JOB_NAME}\nBuild Number: ${env.BUILD_NUMBER}\n\nCheck the details at: ${env.BUILD_URL}",
+                to: 'ahmed.belhajmohamed@esprit.tn'
+            )
         }
     }
 }
