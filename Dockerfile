@@ -16,6 +16,6 @@ EXPOSE 8089
 # Environment variables
 
 ENV ACTIVE_PROFILE=${PROFILE}
-
+ENV DB_URL=jdbc:mysql://mysql-database2:3306/stationSki
 # Command to run the application
-CMD ["java", "-jar", "-Dspring.profiles.active=${ACTIVE_PROFILE}", "/app/app.jar"]
+CMD ["java", "-jar","-Dspring.datasource.url=${DB_URL}" ,"-Dspring.profiles.active=${ACTIVE_PROFILE}", "/app/app.jar"]
