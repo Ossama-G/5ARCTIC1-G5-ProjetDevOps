@@ -61,7 +61,7 @@ pipeline {
         stage('Docker Compose') {
             steps {
                 dir('/home/ahmedbm') {
-                    sh 'docker-compose down'
+                    sh 'docker-compose down --remove-orphans'
                     sh 'docker-compose up -d'
                 }
             }
@@ -79,8 +79,8 @@ pipeline {
                         error "Prometheus check failed with status code ${prometheusResponse}"
                     }
 
-                    // Check if Grafana is running
-                    def grafanaResponse = sh(script: "curl -s -o /dev/null -w '%{http_code}' http://localhost:3000", returnStdout: true).trim()
+                    // Check if Grafana is running and follow redirects
+                    def grafanaResponse = sh(script: "curl -L -s -o /dev/null -w '%{http_code}' http://localhost:3000", returnStdout: true).trim()
                     echo "Grafana response: ${grafanaResponse}"
                     if (grafanaResponse != '200') {
                         error "Grafana check failed with status code ${grafanaResponse}"
