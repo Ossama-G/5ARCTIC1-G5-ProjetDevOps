@@ -62,11 +62,23 @@ pipeline {
                 }
             }
         }
+        stage('Docker Compose') {
+            steps {
+                sh 'docker-compose down'
+                sh 'docker-compose up -d'
+            }
+        }
+        stage('Monitoring with grafana and prometheus') {
+            steps {
+                sh 'docker-compose up -d prometheus grafana'
+            }
+        }
     }
     post {
         always {
             junit '**/target/surefire-reports/*.xml'
             jacoco execPattern: '**/target/jacoco.exec', classPattern: '**/classes', sourcePattern: '**/src/main/java', exclusionPattern: '**/src/test*'
+            sh 'docker-compose down'
         }
     }
 }
