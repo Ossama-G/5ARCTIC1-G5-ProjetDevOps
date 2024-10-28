@@ -74,13 +74,11 @@ pipeline {
             }
         }
     }
-    post {
+ post {
         always {
             junit '**/target/surefire-reports/*.xml'
             jacoco execPattern: '**/target/jacoco.exec', classPattern: '**/classes', sourcePattern: '**/src/main/java', exclusionPattern: '**/src/test*'
-            dir('/home/ahmedbm') {
-                sh 'docker-compose down'
-            }
+            // Remove the docker-compose down command to keep the containers running
         }
     }
 }
