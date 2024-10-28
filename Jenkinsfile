@@ -35,14 +35,8 @@ pipeline {
         }
         stage('Deploy to Nexus') {
             steps {
-                script {
-                    try {
-                        withCredentials([usernamePassword(credentialsId: 'nexus-credentials', usernameVariable: 'NEXUS_USERNAME', passwordVariable: 'NEXUS_PASSWORD')]) {
-                            sh 'mvn deploy -DskipTests -Dnexus.username=$NEXUS_USERNAME -Dnexus.password=$NEXUS_PASSWORD'
-                        }
-                    } catch (Exception e) {
-                        echo "Deployment to Nexus failed, possibly already deployed: ${e.getMessage()}"
-                    }
+                withCredentials([usernamePassword(credentialsId: 'nexus-credentials', usernameVariable: 'NEXUS_USERNAME', passwordVariable: 'NEXUS_PASSWORD')]) {
+                    sh 'mvn deploy -DskipTests -Dnexus.username=$NEXUS_USERNAME -Dnexus.password=$NEXUS_PASSWORD'
                 }
             }
         }
