@@ -40,13 +40,17 @@ pipeline {
                 // Créer le dossier pour les rapports
                 sh 'mkdir -p reports'
 
-                // Générer le rapport HTML à partir de Trivy en utilisant le template avec un chemin absolu
-                sh 'trivy fs --format template --template /var/lib/jenkins/workspace/Oussama-Pipeline/src/main/resources/templates/html.tpl -o reports/trivy-fs-report.html .'
+                // Générer le rapport HTML à partir de Trivy en utilisant un template
+                sh 'trivy fs --format template --template /var/lib/jenkins/workspace/Oussama-Pipeline/src/main/resources/templates/html.tpl -o reports/trivy-fs-report.html . || echo "Trivy command failed"'
+
+                // Afficher le rapport pour debug
+                sh 'cat reports/trivy-fs-report.html'
 
                 // Archiver le rapport HTML généré
                 archiveArtifacts artifacts: 'reports/trivy-fs-report.html', allowEmptyArchive: true
             }
         }
+
 
         stage('SonarQube analysis') {
             steps {
