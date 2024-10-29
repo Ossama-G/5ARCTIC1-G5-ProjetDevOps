@@ -92,28 +92,33 @@ pipeline {
                 }
             }
         }
+        stage(' Email Notification') {
+            steps {
+                script {
+                    if (currentBuild.result == 'SUCCESS') {
+                        emailext(
+                            subject: "Jenkins Build Successful: ${env.JOB_NAME} #${env.BUILD_NUMBER}",
+                            body: "Good news! The build was successful.\n\nJob: ${env.JOB_NAME}\nBuild Number: ${env.BUILD_NUMBER}\n\nCheck the details at: ${env.BUILD_URL}",
+                            to: 'belhajmed.ahmed99@gmail.com',
+                            from: 'abmahmed1099@gmail.com'
+                        )
+                    } else {
+                        emailext(
+                            subject: "Jenkins Build Failed: ${env.JOB_NAME} #${env.BUILD_NUMBER}",
+                            body: "Unfortunately, the build failed.\n\nJob: ${env.JOB_NAME}\nBuild Number: ${env.BUILD_NUMBER}\n\nCheck the details at: ${env.BUILD_URL}",
+                            to: 'belhajmed.ahmed99@gmail.com',
+                            from: 'abmahmed1099@gmail.com'
+                        )
+                    }
+                }
+            }
+        }
     }
     post {
         always {
             junit '**/target/surefire-reports/*.xml'
             jacoco execPattern: '**/target/jacoco.exec', classPattern: '**/classes', sourcePattern: '**/src/main/java', exclusionPattern: '**/src/test*'
             // Remove the docker-compose down command to keep the containers running
-        }
-        success {
-            emailext(
-                subject: "Jenkins Build Successful: ${env.JOB_NAME} #${env.BUILD_NUMBER}",
-                body: "Good news! The build was successful.\n\nJob: ${env.JOB_NAME}\nBuild Number: ${env.BUILD_NUMBER}\n\nCheck the details at: ${env.BUILD_URL}",
-                to: 'belhajmed.ahmed99@gmail.com',
-                from: 'abmahmed1099@gmail.com'
-            )
-        }
-        failure {
-            emailext(
-                subject: "Jenkins Build Failed: ${env.JOB_NAME} #${env.BUILD_NUMBER}",
-                body: "Unfortunately, the build failed.\n\nJob: ${env.JOB_NAME}\nBuild Number: ${env.BUILD_NUMBER}\n\nCheck the details at: ${env.BUILD_URL}",
-                to: 'belhajmed.ahmed99@gmail.com',
-                from: 'abmahmed1099@gmail.com'
-            )
         }
     }
 }
