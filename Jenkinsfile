@@ -25,16 +25,16 @@ pipeline {
 
         stage('Vulnerability Scan Using Trivy') {
             steps {
-                // Télécharge la base de données de vulnérabilités
                 script {
                     sh 'trivy image --download-db-only'
                 }
 
-                sh 'mkdir -p reports'
-                sh 'trivy fs --format json -o reports/trivy-fs-report.json .'
-                sh 'trivy fs --format template --template "./src/main/resources/templates/html.tpl" -o reports/trivy-fs-report.html .'
+                sh 'mkdir -p $WORKSPACE/reports'
+                sh 'trivy fs --format json -o $WORKSPACE/reports/trivy-fs-report.json .'
+                sh 'trivy fs --format template --template "./src/main/resources/templates/html.tpl" -o $WORKSPACE/reports/trivy-fs-report.html .'
 
-                sh 'ls -la reports'
+                // Vérification de la création du dossier et des fichiers
+                sh 'ls -la $WORKSPACE/reports'
 
                 archiveArtifacts artifacts: 'reports/trivy-fs-report.json, reports/trivy-fs-report.html', allowEmptyArchive: true
             }
@@ -75,7 +75,7 @@ pipeline {
         success {
             publishHTML(target: [
                 reportName: 'Trivy Vulnerability Code Source Report',
-                reportDir: 'reports',
+                reportDir: "$WORKSPACE/reports",
                 reportFiles: 'trivy-fs-report.html',
                 alwaysLinkToLastBuild: true,
                 keepAll: true,
@@ -85,7 +85,7 @@ pipeline {
         }
 
         always {
-              cleanWs()
+            cleanWs()
         }
     }
 }
