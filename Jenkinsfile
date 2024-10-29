@@ -33,6 +33,9 @@ pipeline {
                 sh 'mkdir -p reports'
                 sh 'trivy fs --format json -o reports/trivy-fs-report.json .'
                 sh 'trivy fs --format template --template "./src/main/resources/templates/html.tpl" -o reports/trivy-fs-report.html .'
+
+                sh 'ls -la reports'
+
                 archiveArtifacts artifacts: 'reports/trivy-fs-report.json, reports/trivy-fs-report.html', allowEmptyArchive: true
             }
         }
