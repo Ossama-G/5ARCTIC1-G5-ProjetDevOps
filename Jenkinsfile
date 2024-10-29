@@ -92,10 +92,10 @@ pipeline {
                 }
             }
         }
-        stage(' Email Notification') {
+        stage('Email Notification') {
             steps {
                 script {
-                    if (currentBuild.result == 'SUCCESS') {
+                    if (currentBuild.currentResult == 'SUCCESS') {
                         emailext(
                             subject: "Jenkins Build Successful: ${env.JOB_NAME} #${env.BUILD_NUMBER}",
                             body: "Good news! The build was successful.\n\nJob: ${env.JOB_NAME}\nBuild Number: ${env.BUILD_NUMBER}\n\nCheck the details at: ${env.BUILD_URL}",
