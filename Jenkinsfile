@@ -23,12 +23,20 @@ pipeline {
             }
         }
 
-        stage('Vulnerability Scan Using Trivy') {
-            steps {
-                sh 'trivy fs --format json -o trivy-fs-report.json .'
-                sh 'trivy fs --format template --template "./templates/html.tpl" -o trivy-fs-report.html .'
-            }
-        }
+       stage('Vulnerability Scan Using Trivy') {
+           steps {
+               script {
+                   // Met à jour la base de données de vulnérabilités de Trivy
+                   sh 'trivy image --download-db-only'
+               }
+
+               // Scan le système de fichiers et génère un rapport JSON
+               sh 'trivy fs --format json -o trivy-fs-report.json .'
+
+               // Utilise un template pour générer un rapport HTML basé sur le JSON
+               sh 'trivy fs --format template --template "./templates/html.tpl" -o trivy-fs-report.html .'
+           }
+       }
 
         stage('SonarQube analysis') {
             steps {
