@@ -11,13 +11,6 @@ pipeline {
             }
         }
 
-        stage('Verify Template File') {
-            steps {
-                // Vérifier la présence du fichier template
-                sh 'ls -l $WORKSPACE/src/main/resources/templates/'
-            }
-        }
-
         stage('Compile') {
             steps {
                 sh 'mvn clean compile'
@@ -33,24 +26,14 @@ pipeline {
         stage('Vulnerability Scan Using Trivy') {
             steps {
                 script {
-                    // Télécharger la base de données de vulnérabilités
                     sh 'trivy image --download-db-only'
                 }
 
-                // Créer le dossier pour les rapports
                 sh 'mkdir -p reports'
-
-                // Générer le rapport HTML à partir de Trivy en utilisant un template
-                sh 'trivy fs --format template --template /var/lib/jenkins/workspace/Oussama-Pipeline/src/main/resources/templates/html.tpl -o reports/trivy-fs-report.html . || echo "Trivy command failed"'
-
-                // Afficher le rapport pour debug
-                sh 'cat reports/trivy-fs-report.html'
-
-                // Archiver le rapport HTML généré
+                sh 'trivy fs --format table -o reports/trivy-fs-report.html .'
                 archiveArtifacts artifacts: 'reports/trivy-fs-report.html', allowEmptyArchive: true
             }
         }
-
 
         stage('SonarQube analysis') {
             steps {
