@@ -11,6 +11,12 @@ pipeline {
             }
         }
 
+        stage('Verify Template File') {
+            steps {
+                sh 'ls -l $WORKSPACE/src/main/resources/templates/'
+            }
+        }
+
         stage('Compile') {
             steps {
                 sh 'mvn clean compile'
@@ -26,11 +32,20 @@ pipeline {
         stage('Vulnerability Scan Using Trivy') {
             steps {
                 script {
+                    // Télécharger la base de données de vulnérabilités
                     sh 'trivy image --download-db-only'
                 }
 
+                // Créer le dossier pour les rapports
                 sh 'mkdir -p reports'
-                sh 'trivy fs --format table -o reports/trivy-fs-report.html .'
+
+                // Générer le rapport en format JSON à partir de Trivy
+                sh 'trivy fs --format json -o reports/trivy-fs-report.json .'
+
+                // Convertir le rapport JSON en HTML (à l'aide d'un script Python par exemple)
+                sh 'python3 $WORKSPACE/src/main/resources/templates/json_to_html.py reports/trivy-fs-report.json reports/trivy-fs-report.html'
+
+                // Archiver le rapport HTML généré
                 archiveArtifacts artifacts: 'reports/trivy-fs-report.html', allowEmptyArchive: true
             }
         }
