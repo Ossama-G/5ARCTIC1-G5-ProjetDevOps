@@ -23,9 +23,10 @@ pipeline {
             }
         }
 
-        stage ('Vulnerability Scan Using Trivy') {
+        stage('Vulnerability Scan Using Trivy') {
             steps {
-                sh 'trivy fs --format html -o trivy-fs-report.html .'
+                sh 'trivy fs --format json -o trivy-fs-report.json .'
+                sh 'trivy fs --format template --template "./templates/html.tpl" -o trivy-fs-report.html .'
             }
         }
 
@@ -62,12 +63,6 @@ pipeline {
 
     post {
         always {
-            publishHTML([allowMissing: false,
-                alwaysLinkToLastBuild: true,
-                keepAll: true,
-                reportDir: '.',
-                reportFiles: 'trivy-fs-report.html',
-                reportName: 'Trivy Vulnerability Report'])
             cleanWs()
         }
     }
