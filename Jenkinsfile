@@ -23,6 +23,12 @@ pipeline {
             }
         }
 
+        stage ('Vulnerability Scan Using Trivy') {
+            steps {
+                sh 'trivy fs --format html -o trivy-fs-report.html .'
+            }
+        }
+
         stage('SonarQube analysis') {
             steps {
                 withSonarQubeEnv('sonar-scanner') {
@@ -45,7 +51,7 @@ pipeline {
             }
         }
 
-        stage('Deploy to Nexus') {
+        stage('Artifact Deployment to Nexus') {
             steps {
                 withMaven(globalMavenSettingsConfig: 'global-settings', jdk: 'JAVA_HOME', maven: 'M2_HOME') {
                     sh 'mvn deploy -X'
@@ -56,6 +62,12 @@ pipeline {
 
     post {
         always {
+            publishHTML([allowMissing: false,
+                alwaysLinkToLastBuild: true,
+                keepAll: true,
+                reportDir: '.',
+                reportFiles: 'trivy-fs-report.html',
+                reportName: 'Trivy Vulnerability Report'])
             cleanWs()
         }
     }
