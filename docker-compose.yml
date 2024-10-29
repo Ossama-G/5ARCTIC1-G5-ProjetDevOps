@@ -20,8 +20,8 @@ services:
       - "8089:8089"
     environment:
       SPRING_DATASOURCE_URL: jdbc:mysql://database:3306/stationSki?createDatabaseIfNotExist=true
-      MYSQL_DATABASE: root
-      MYSQL_ROOT_PASSWORD: rootpassword
+      MYSQL_DATABASE: hssin
+      MYSQL_ROOT_PASSWORD: hssin
     depends_on:
       - database
     volumes:
