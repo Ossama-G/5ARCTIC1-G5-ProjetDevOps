@@ -13,6 +13,7 @@ pipeline {
 
         stage('Verify Template File') {
             steps {
+                // Vérifier la présence du fichier template
                 sh 'ls -l $WORKSPACE/src/main/resources/templates/'
             }
         }
@@ -36,8 +37,13 @@ pipeline {
                     sh 'trivy image --download-db-only'
                 }
 
+                // Créer le dossier pour les rapports
                 sh 'mkdir -p reports'
-                sh 'trivy fs --format template --template $WORKSPACE/src/main/resources/templates/html.tpl -o reports/trivy-fs-report.html .'
+
+                // Générer le rapport HTML à partir de Trivy en utilisant le template avec un chemin absolu
+                sh 'trivy fs --format template --template /var/lib/jenkins/workspace/Oussama-Pipeline/src/main/resources/templates/html.tpl -o reports/trivy-fs-report.html .'
+
+                // Archiver le rapport HTML généré
                 archiveArtifacts artifacts: 'reports/trivy-fs-report.html', allowEmptyArchive: true
             }
         }
