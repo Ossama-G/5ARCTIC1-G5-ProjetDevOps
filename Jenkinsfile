@@ -77,7 +77,9 @@ pipeline {
                 keepAll: true,
                 allowMissing: true
             ])
-            recordIssues tools: [openTasks()]
+        }
+
+        cleanup {
             cleanWs()
         }
     }
