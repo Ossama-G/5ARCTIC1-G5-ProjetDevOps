@@ -31,7 +31,7 @@ pipeline {
                 }
 
                 sh 'mkdir -p reports'
-                sh 'trivy fs --format template --template "$WORKSPACE/src/main/resources/templates/html.tpl" -o reports/trivy-fs-report.html .'
+                sh 'trivy fs --format html -o reports/trivy-fs-report.html .'
 
                 archiveArtifacts artifacts: 'reports/trivy-fs-report.html', allowEmptyArchive: true
             }
