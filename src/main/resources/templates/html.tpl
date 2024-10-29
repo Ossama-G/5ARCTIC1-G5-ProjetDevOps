@@ -12,9 +12,13 @@
       }
       .group-header th {
         font-size: 200%;
+        background-color: #f0f0f0;
+        color: #333;
       }
       .sub-header th {
         font-size: 150%;
+        background-color: #e8e8e8;
+        color: #555;
       }
       table, th, td {
         border: 1px solid black;
@@ -56,9 +60,9 @@
     <script>
       window.onload = function() {
         document.querySelectorAll('td.links').forEach(function(linkCell) {
-          var links = [].concat.apply([], linkCell.querySelectorAll('a'));
-          [].sort.apply(links, function(a, b) {
-            return a.href > b.href ? 1 : -1;
+          var links = Array.from(linkCell.querySelectorAll('a'));
+          links.sort(function(a, b) {
+            return a.href.localeCompare(b.href);
           });
           links.forEach(function(link, idx) {
             if (links.length > 3 && 3 === idx) {
@@ -87,7 +91,7 @@
     {{- range . }}
       <tr class="group-header"><th colspan="6">{{ .Type | toString | escapeXML }}</th></tr>
       {{- if (eq (len .Vulnerabilities) 0) }}
-      <tr><th colspan="6">No Vulnerabilities found</th></tr>
+      <tr><th colspan="6" style="text-align:center;">🎉 No Vulnerabilities found. Great job!</th></tr>
       {{- else }}
       <tr class="sub-header">
         <th>Package</th>
@@ -113,7 +117,7 @@
         {{- end }}
       {{- end }}
       {{- if (eq (len .Misconfigurations ) 0) }}
-      <tr><th colspan="6">No Misconfigurations found</th></tr>
+      <tr><th colspan="6" style="text-align:center;">🎉 No Misconfigurations found. Great job!</th></tr>
       {{- else }}
       <tr class="sub-header">
         <th>Type</th>
@@ -128,7 +132,7 @@
         <td>{{ escapeXML .ID }}</td>
         <td class="misconf-check">{{ escapeXML .Title }}</td>
         <td class="severity">{{ escapeXML .Severity }}</td>
-        <td class="link" data-more-links="off"  style="white-space:normal;">
+        <td class="link" data-more-links="off" style="white-space:normal;">
           {{ escapeXML .Message }}
           <br>
             <a href={{ escapeXML .PrimaryURL | printf "%q" }}>{{ escapeXML .PrimaryURL }}</a>

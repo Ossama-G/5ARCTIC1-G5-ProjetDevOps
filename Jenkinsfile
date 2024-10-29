@@ -74,8 +74,8 @@ pipeline {
                 reportDir: 'reports',
                 reportFiles: 'trivy-fs-report.html',
                 alwaysLinkToLastBuild: true,
-                keepAll: true,
-                allowMissing: true
+                keepAll: false,
+                allowMissing: false
             ])
         }
 
