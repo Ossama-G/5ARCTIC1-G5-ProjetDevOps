@@ -13,35 +13,61 @@ def json_to_html(json_file, html_file):
         <title>Trivy Vulnerability Report</title>
         <style>
             body {
-                font-family: Arial, sans-serif;
-                background-color: #f4f4f4;
-                color: #333;
+                font-family: 'Arial', sans-serif;
+                background-color: #f8f9fa;
+                color: #212529;
+                margin: 0;
+                padding: 0;
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                flex-direction: column;
+                min-height: 100vh;
+            }
+            h1 {
+                color: #007bff;
             }
             table {
-                width: 100%;
+                width: 80%;
                 border-collapse: collapse;
                 margin: 20px 0;
                 font-size: 16px;
                 text-align: left;
+                box-shadow: 0 2px 15px rgba(0, 0, 0, 0.1);
             }
-            table, th, td {
+            th, td {
                 border: 1px solid #ddd;
-                padding: 8px;
+                padding: 12px 15px;
             }
             th {
-                background-color: #f2f2f2;
-                color: #333;
+                background-color: #343a40;
+                color: #fff;
             }
             tr:nth-child(even) {
-                background-color: #f9f9f9;
+                background-color: #f2f2f2;
             }
             tr:hover {
-                background-color: #f1f1f1;
+                background-color: #d6e9c6;
+                transition: 0.2s;
+            }
+            #download-button {
+                margin: 20px;
+                padding: 10px 20px;
+                background-color: #28a745;
+                color: white;
+                border: none;
+                border-radius: 5px;
+                cursor: pointer;
+                font-size: 16px;
+            }
+            #download-button:hover {
+                background-color: #218838;
             }
         </style>
     </head>
     <body>
         <h1>Trivy Vulnerability Report</h1>
+        <button id="download-button" onclick="downloadReport()">Download Report</button>
     """
 
     # Ajouter les détails des vulnérabilités
@@ -61,8 +87,16 @@ def json_to_html(json_file, html_file):
 
         html_content += "</table>"
 
-    # Fin du document HTML
+    # Ajouter le script pour le téléchargement
     html_content += """
+        <script>
+            function downloadReport() {
+                var link = document.createElement('a');
+                link.href = window.location.href;
+                link.download = 'trivy-vulnerability-report.html';
+                link.click();
+            }
+        </script>
     </body>
     </html>
     """
