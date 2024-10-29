@@ -2,14 +2,14 @@ import json
 import sys
 
 def json_to_html(json_file, html_file):
-    # Charger le fichier JSON
     with open(json_file, 'r') as f:
         data = json.load(f)
 
-    # Début du document HTML
     html_content = """
+    <!DOCTYPE html>
     <html>
     <head>
+        <meta charset="UTF-8">
         <title>Trivy Vulnerability Report</title>
         <style>
             body {
@@ -56,48 +56,15 @@ def json_to_html(json_file, html_file):
                 background-color: #e3f2fd;
                 transition: 0.3s;
             }
-            #download-button {
-                margin: 20px;
-                padding: 12px 24px;
-                background: linear-gradient(135deg, #28a745, #218838);
-                color: white;
-                border: none;
-                border-radius: 5px;
-                cursor: pointer;
-                font-size: 18px;
-                font-weight: bold;
-                box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
-                transition: background 0.3s, box-shadow 0.3s;
-            }
-            #download-button:hover {
-                background: linear-gradient(135deg, #218838, #1e7e34);
-                box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
-            }
-            #zip-link {
-                margin-bottom: 10px;
-                display: inline-block;
-                font-size: 18px;
-                color: #007bff;
-                text-decoration: none;
-            }
-            #zip-link:hover {
-                text-decoration: underline;
-            }
         </style>
-        <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.9.2/html2pdf.bundle.min.js"></script>
     </head>
     <body>
         <h1>Trivy Vulnerability Report</h1>
-        <a href="#" id="zip-link">Zip</a>
-        <button id="download-button" onclick="downloadPDF()">PDF</button>
+        <table>
+            <tr><th>Vulnerability ID</th><th>Severity</th><th>Description</th></tr>
     """
 
-    # Ajouter les détails des vulnérabilités
     for result in data.get("Results", []):
-        html_content += f"<h2>Target: {result.get('Target')}</h2>"
-        html_content += "<table>"
-        html_content += "<tr><th>Vulnerability ID</th><th>Severity</th><th>Description</th></tr>"
-
         for vuln in result.get("Vulnerabilities", []):
             severity_color = "#dc3545" if vuln.get('Severity') == "HIGH" else "#ffc107"
             html_content += f"""
@@ -108,25 +75,15 @@ def json_to_html(json_file, html_file):
             </tr>
             """
 
-        html_content += "</table>"
-
-    # Ajouter le script pour le téléchargement en PDF
     html_content += """
-        <script>
-            function downloadPDF() {
-                const element = document.body;
-                html2pdf().from(element).save('trivy-vulnerability-report.pdf');
-            }
-        </script>
+        </table>
     </body>
     </html>
     """
 
-    # Enregistrer dans le fichier HTML
     with open(html_file, 'w') as f:
         f.write(html_content)
 
-# Récupérer les arguments de ligne de commande (fichier JSON et fichier HTML)
 if len(sys.argv) != 3:
     print("Usage: python json_to_html.py <input_json> <output_html>")
     sys.exit(1)
@@ -134,5 +91,4 @@ if len(sys.argv) != 3:
 json_file = sys.argv[1]
 html_file = sys.argv[2]
 
-# Appeler la fonction pour convertir JSON en HTML
 json_to_html(json_file, html_file)
