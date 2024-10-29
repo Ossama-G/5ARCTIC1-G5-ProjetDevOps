@@ -25,19 +25,14 @@ pipeline {
 
         stage('Vulnerability Scan Using Trivy') {
             steps {
-                script {
-                        sh 'mkdir -p reports'
-                }
-
                 // Télécharge la base de données de vulnérabilités
                 script {
                     sh 'trivy image --download-db-only'
                 }
 
+                sh 'mkdir -p reports'
                 sh 'trivy fs --format json -o reports/trivy-fs-report.json .'
-
                 sh 'trivy fs --format template --template "./src/main/resources/templates/html.tpl" -o reports/trivy-fs-report.html .'
-
                 archiveArtifacts artifacts: 'reports/trivy-fs-report.json, reports/trivy-fs-report.html', allowEmptyArchive: true
             }
         }
