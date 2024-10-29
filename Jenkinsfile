@@ -39,10 +39,10 @@ pipeline {
                 // Créer le dossier pour les rapports
                 sh 'mkdir -p reports'
 
-                // Générer le rapport en format JSON à partir de Trivy
+                // Générer le rapport JSON à partir de Trivy
                 sh 'trivy fs --format json -o reports/trivy-fs-report.json .'
 
-                // Convertir le rapport JSON en HTML (à l'aide d'un script Python par exemple)
+                // Générer un rapport HTML lisible en utilisant le script Python
                 sh 'python3 $WORKSPACE/src/main/resources/templates/json_to_html.py reports/trivy-fs-report.json reports/trivy-fs-report.html'
 
                 // Archiver le rapport HTML généré
