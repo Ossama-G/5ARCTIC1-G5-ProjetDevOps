@@ -2,7 +2,7 @@
 <html>
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
-{{- if . }}
+    {{- if . }}
     <style>
       * {
         font-family: Arial, Helvetica, sans-serif;
@@ -47,49 +47,14 @@
       table tr td:first-of-type {
         font-weight: bold;
       }
-      .links a,
-      .links[data-more-links=on] a {
-        display: block;
-      }
-      .links[data-more-links=off] a:nth-of-type(1n+5) {
-        display: none;
-      }
-      a.toggle-more-links { cursor: pointer; }
     </style>
     <title>{{- escapeXML ( index . 0 ).Target }} - Trivy Report - {{ now }} </title>
-    <script>
-      window.onload = function() {
-        document.querySelectorAll('td.links').forEach(function(linkCell) {
-          var links = Array.from(linkCell.querySelectorAll('a'));
-          links.sort(function(a, b) {
-            return a.href.localeCompare(b.href);
-          });
-          links.forEach(function(link, idx) {
-            if (links.length > 3 && 3 === idx) {
-              var toggleLink = document.createElement('a');
-              toggleLink.innerText = "Toggle more links";
-              toggleLink.href = "#toggleMore";
-              toggleLink.setAttribute("class", "toggle-more-links");
-              linkCell.appendChild(toggleLink);
-            }
-            linkCell.appendChild(link);
-          });
-        });
-        document.querySelectorAll('a.toggle-more-links').forEach(function(toggleLink) {
-          toggleLink.onclick = function() {
-            var expanded = toggleLink.parentElement.getAttribute("data-more-links");
-            toggleLink.parentElement.setAttribute("data-more-links", "on" === expanded ? "off" : "on");
-            return false;
-          };
-        });
-      };
-    </script>
   </head>
   <body>
     <h1>{{- escapeXML ( index . 0 ).Target }} - Trivy Report - {{ now }}</h1>
     <table>
     {{- range . }}
-      <tr class="group-header"><th colspan="6">{{ .Type | toString | escapeXML }}</th></tr>
+      <tr class="group-header"><th colspan="6">{{ .Target | escapeXML }}</th></tr>
       {{- if (eq (len .Vulnerabilities) 0) }}
       <tr><th colspan="6" style="text-align:center;">🎉 No Vulnerabilities found. Great job!</th></tr>
       {{- else }}
@@ -102,41 +67,20 @@
         <th>Links</th>
       </tr>
         {{- range .Vulnerabilities }}
-      <tr class="severity-{{ escapeXML .Vulnerability.Severity }}">
+      <tr class="severity-{{ escapeXML .Severity }}">
         <td class="pkg-name">{{ escapeXML .PkgName }}</td>
         <td>{{ escapeXML .VulnerabilityID }}</td>
-        <td class="severity">{{ escapeXML .Vulnerability.Severity }}</td>
+        <td class="severity">{{ escapeXML .Severity }}</td>
         <td class="pkg-version">{{ escapeXML .InstalledVersion }}</td>
         <td>{{ escapeXML .FixedVersion }}</td>
-        <td class="links" data-more-links="off">
-          {{- range .Vulnerability.References }}
-          <a href={{ escapeXML . | printf "%q" }}>{{ escapeXML . }}</a>
+        <td>
+          {{- if .References }}
+            {{- range .References }}
+            <a href={{ escapeXML . | printf "%q" }}>{{ escapeXML . }}</a><br/>
+            {{- end }}
+          {{- else }}
+            <span>No references available</span>
           {{- end }}
-        </td>
-      </tr>
-        {{- end }}
-      {{- end }}
-      {{- if (eq (len .Misconfigurations ) 0) }}
-      <tr><th colspan="6" style="text-align:center;">🎉 No Misconfigurations found. Great job!</th></tr>
-      {{- else }}
-      <tr class="sub-header">
-        <th>Type</th>
-        <th>Misconf ID</th>
-        <th>Check</th>
-        <th>Severity</th>
-        <th>Message</th>
-      </tr>
-        {{- range .Misconfigurations }}
-      <tr class="severity-{{ escapeXML .Severity }}">
-        <td class="misconf-type">{{ escapeXML .Type }}</td>
-        <td>{{ escapeXML .ID }}</td>
-        <td class="misconf-check">{{ escapeXML .Title }}</td>
-        <td class="severity">{{ escapeXML .Severity }}</td>
-        <td class="link" data-more-links="off" style="white-space:normal;">
-          {{ escapeXML .Message }}
-          <br>
-            <a href={{ escapeXML .PrimaryURL | printf "%q" }}>{{ escapeXML .PrimaryURL }}</a>
-          </br>
         </td>
       </tr>
         {{- end }}
