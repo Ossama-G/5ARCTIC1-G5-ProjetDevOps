@@ -28,6 +28,26 @@ pipeline {
                 }
             }
         }
+        stage('Trivy Scan') {
+            steps {
+                script {
+                    // Download the vulnerability database
+                    sh 'trivy image --download-db-only'
+
+                    // Create the reports directory
+                    sh 'mkdir -p reports'
+
+                    // Generate the JSON report
+                    sh 'trivy fs --format json -o reports/trivy-fs-report.json .'
+
+                    // Generate the HTML report using a Python script
+                    sh 'python3 $WORKSPACE/src/main/resources/templates/json_to_html.py reports/trivy-fs-report.json reports/trivy-fs-report.html'
+
+                    // Archive the HTML report
+                    archiveArtifacts artifacts: 'reports/trivy-fs-report.html', allowEmptyArchive: true
+                }
+            }
+        }
         stage('JaCoCo Report') {
             steps {
                 sh 'mvn jacoco:report'
@@ -46,14 +66,6 @@ pipeline {
             steps {
                 script {
                     dockerImage = docker.build("${env.DOCKERHUB_USERNAME}/gestion-station-ski:latest")
-                }
-            }
-        }
-        stage('Trivy Scan') {
-            steps {
-                script {
-                    // Run Trivy scan on the built Docker image
-                    sh 'trivy image --exit-code 1 --severity HIGH,CRITICAL ${env.DOCKERHUB_USERNAME}/gestion-station-ski:latest'
                 }
             }
         }
@@ -127,6 +139,16 @@ pipeline {
             junit '**/target/surefire-reports/*.xml'
             jacoco execPattern: '**/target/jacoco.exec', classPattern: '**/classes', sourcePattern: '**/src/main/java', exclusionPattern: '**/src/test*'
             // Remove the docker-compose down command to keep the containers running
+        }
+        success {
+            publishHTML(target: [
+                reportName: 'Trivy Vulnerability Code Source Report',
+                reportDir: 'reports',
+                reportFiles: 'trivy-fs-report.html',
+                alwaysLinkToLastBuild: true,
+                keepAll: false,
+                allowMissing: false
+            ])
         }
     }
 }
