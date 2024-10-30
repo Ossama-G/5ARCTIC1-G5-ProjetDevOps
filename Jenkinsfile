@@ -49,6 +49,14 @@ pipeline {
                 }
             }
         }
+        stage('Trivy Scan') {
+            steps {
+                script {
+                    // Run Trivy scan on the built Docker image
+                    sh 'trivy image --exit-code 1 --severity HIGH,CRITICAL ${env.DOCKERHUB_USERNAME}/gestion-station-ski:latest'
+                }
+            }
+        }
         stage('Push Docker Image') {
             steps {
                 script {
