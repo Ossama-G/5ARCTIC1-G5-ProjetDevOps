@@ -118,26 +118,14 @@ pipeline {
             junit '**/target/surefire-reports/*.xml'
             jacoco execPattern: '**/target/jacoco.exec', classPattern: '**/classes', sourcePattern: '**/src/main/java', exclusionPattern: '**/src/test*'
             // Remove the docker-compose down command to keep the containers running
-
-            script {
-                if (currentBuild.currentResult == 'SUCCESS') {
-                    emailext(
-                        subject: "Jenkins Build Successful: ${env.JOB_NAME} #${env.BUILD_NUMBER}",
-                        body: "Good news! The build was successful.\n\nJob: ${env.JOB_NAME}\nBuild Number: ${env.BUILD_NUMBER}\n\nCheck the details at: ${env.BUILD_URL}",
-                        to: 'belhajmed.ahmed99@gmail.com',
-                        from: 'abmahmed1099@gmail.com'
-                    )
-                } else {
-                    emailext(
-                        subject: "Jenkins Build Failed: ${env.JOB_NAME} #${env.BUILD_NUMBER}",
-                        body: "Unfortunately, the build failed.\n\nJob: ${env.JOB_NAME}\nBuild Number: ${env.BUILD_NUMBER}\n\nCheck the details at: ${env.BUILD_URL}",
-                        to: 'belhajmed.ahmed99@gmail.com',
-                        from: 'abmahmed1099@gmail.com'
-                    )
-                }
-            }
         }
         success {
+            emailext(
+                subject: "Jenkins Build Successful: ${env.JOB_NAME} #${env.BUILD_NUMBER}",
+                body: "Good news! The build was successful.\n\nJob: ${env.JOB_NAME}\nBuild Number: ${env.BUILD_NUMBER}\n\nCheck the details at: ${env.BUILD_URL}",
+                to: 'belhajmed.ahmed99@gmail.com',
+                from: 'abmahmed1099@gmail.com'
+            )
             publishHTML(target: [
                 reportName: 'Trivy Vulnerability Code Source Report',
                 reportDir: 'reports',
@@ -146,6 +134,14 @@ pipeline {
                 keepAll: false,
                 allowMissing: false
             ])
+        }
+        failure {
+            emailext(
+                subject: "Jenkins Build Failed: ${env.JOB_NAME} #${env.BUILD_NUMBER}",
+                body: "Unfortunately, the build failed.\n\nJob: ${env.JOB_NAME}\nBuild Number: ${env.BUILD_NUMBER}\n\nCheck the details at: ${env.BUILD_URL}",
+                to: 'belhajmed.ahmed99@gmail.com',
+                from: 'abmahmed1099@gmail.com'
+            )
         }
     }
 }
