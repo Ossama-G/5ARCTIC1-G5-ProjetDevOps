@@ -36,7 +36,7 @@ def json_to_html(json_file, html_file):
                 box-shadow: 0 2px 15px rgba(0, 0, 0, 0.1);
             }
             th, td {
-                border: 1px solid #ddd;  /* Bordures */
+                border: 1px solid #ddd;  /* Ajouter des bordures */
                 padding: 12px 15px;
             }
             th {
@@ -54,21 +54,6 @@ def json_to_html(json_file, html_file):
                 background-color: #d6e9c6;
                 transition: 0.2s;
             }
-            .high {
-                background-color: #f8d7da;  /* Rouge pâle pour les niveaux élevés */
-                color: #721c24;
-                font-weight: bold;
-            }
-            .medium {
-                background-color: #fff3cd;  /* Orange pâle pour les niveaux moyens */
-                color: #856404;
-                font-weight: bold;
-            }
-            .low {
-                background-color: #d4edda;  /* Vert pâle pour les niveaux faibles */
-                color: #155724;
-                font-weight: bold;
-            }
         </style>
     </head>
     <body>
@@ -82,17 +67,8 @@ def json_to_html(json_file, html_file):
         html_content += "<tr><th>Vulnerability ID</th><th>Severity</th><th>Description</th></tr>"
 
         for vuln in result.get("Vulnerabilities", []):
-            # Ajouter une classe CSS en fonction de la gravité
-            severity_class = ""
-            if vuln.get('Severity') == "HIGH":
-                severity_class = "high"
-            elif vuln.get('Severity') == "MEDIUM":
-                severity_class = "medium"
-            elif vuln.get('Severity') == "LOW":
-                severity_class = "low"
-
             html_content += f"""
-            <tr class="{severity_class}">
+            <tr>
                 <td>{vuln.get('VulnerabilityID')}</td>
                 <td>{vuln.get('Severity')}</td>
                 <td>{vuln.get('Title')}</td>
