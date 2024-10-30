@@ -13,8 +13,8 @@ def json_to_html(json_file, html_file):
         <title>Trivy Vulnerability Report</title>
         <style>
             body {
-                font-family: 'Arial', sans-serif;
-                background-color: #f8f9fa;
+                font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+                background: linear-gradient(135deg, #e0e0e0, #ffffff);
                 color: #212529;
                 margin: 0;
                 padding: 0;
@@ -26,48 +26,70 @@ def json_to_html(json_file, html_file):
             }
             h1 {
                 color: #007bff;
+                font-size: 2.5em;
+                margin-bottom: 10px;
             }
             table {
-                width: 80%;
-                border-collapse: collapse;
+                width: 90%;
+                border-collapse: separate;
+                border-spacing: 0;
                 margin: 20px 0;
                 font-size: 16px;
                 text-align: left;
-                box-shadow: 0 2px 15px rgba(0, 0, 0, 0.1);
+                box-shadow: 0 2px 15px rgba(0, 0, 0, 0.2);
+                border-radius: 12px;
+                overflow: hidden;
             }
             th, td {
-                border: 1px solid #ddd;
                 padding: 12px 15px;
+                border-bottom: 1px solid #e0e0e0;
             }
             th {
-                background-color: #343a40;
-                color: #fff;
+                background: linear-gradient(135deg, #007bff, #0056b3);
+                color: white;
+                font-weight: bold;
             }
             tr:nth-child(even) {
-                background-color: #f2f2f2;
+                background-color: #f9f9f9;
             }
             tr:hover {
-                background-color: #d6e9c6;
-                transition: 0.2s;
+                background-color: #e3f2fd;
+                transition: 0.3s;
             }
             #download-button {
                 margin: 20px;
-                padding: 10px 20px;
-                background-color: #28a745;
+                padding: 12px 24px;
+                background: linear-gradient(135deg, #28a745, #218838);
                 color: white;
                 border: none;
                 border-radius: 5px;
                 cursor: pointer;
-                font-size: 16px;
+                font-size: 18px;
+                font-weight: bold;
+                box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+                transition: background 0.3s, box-shadow 0.3s;
             }
             #download-button:hover {
-                background-color: #218838;
+                background: linear-gradient(135deg, #218838, #1e7e34);
+                box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+            }
+            #zip-link {
+                margin-bottom: 10px;
+                display: inline-block;
+                font-size: 18px;
+                color: #007bff;
+                text-decoration: none;
+            }
+            #zip-link:hover {
+                text-decoration: underline;
             }
         </style>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.9.2/html2pdf.bundle.min.js"></script>
     </head>
     <body>
         <h1>Trivy Vulnerability Report</h1>
-        <button id="download-button" onclick="downloadReport()">Download Report</button>
+        <a href="#" id="zip-link">Zip</a>
+        <button id="download-button" onclick="downloadPDF()">PDF</button>
     """
 
     # Ajouter les détails des vulnérabilités
@@ -77,24 +99,23 @@ def json_to_html(json_file, html_file):
         html_content += "<tr><th>Vulnerability ID</th><th>Severity</th><th>Description</th></tr>"
 
         for vuln in result.get("Vulnerabilities", []):
+            severity_color = "#dc3545" if vuln.get('Severity') == "HIGH" else "#ffc107"
             html_content += f"""
             <tr>
                 <td>{vuln.get('VulnerabilityID')}</td>
-                <td>{vuln.get('Severity')}</td>
+                <td style="color: {severity_color}; font-weight: bold;">{vuln.get('Severity')}</td>
                 <td>{vuln.get('Title')}</td>
             </tr>
             """
 
         html_content += "</table>"
 
-    # Ajouter le script pour le téléchargement
+    # Ajouter le script pour le téléchargement en PDF
     html_content += """
         <script>
-            function downloadReport() {
-                var link = document.createElement('a');
-                link.href = window.location.href;
-                link.download = 'trivy-vulnerability-report.html';
-                link.click();
+            function downloadPDF() {
+                const element = document.body;
+                html2pdf().from(element).save('trivy-vulnerability-report.pdf');
             }
         </script>
     </body>
