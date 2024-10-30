@@ -1,10 +1,22 @@
-FROM openjdk:17-jdk-alpine
-
+# Use the official Maven image to build the application
+FROM maven:3.8.6-openjdk-17 AS build
 WORKDIR /app
 
-COPY target/gestion-station-ski-1.0.jar /app/gestion-station-ski-1.0.jar
+# Copy the source code into the container
+COPY . .
 
-EXPOSE 8099
+# Build the application and create a JAR file
+RUN mvn clean package -DskipTests
 
-ENTRYPOINT ["java", "-jar", "gestion-station-ski-1.0.jar"]
+# Use the official OpenJDK image to run the application
+FROM openjdk:17-jdk-slim
+WORKDIR /app
 
+# Copy the JAR file from the build stage to the runtime image
+COPY --from=build /app/target/gestion-station-ski-1.0.jar app.jar
+
+# Expose the port the app will run on
+EXPOSE 8080
+
+# Run the application
+ENTRYPOINT ["java", "-jar", "/app/app.jar"]
