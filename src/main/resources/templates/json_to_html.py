@@ -31,7 +31,7 @@ def json_to_html(json_file, html_file):
             }
             table {
                 width: 90%;
-                border-collapse: collapse;
+                border-collapse: collapse;  /* Corrigé pour afficher les bordures */
                 margin: 20px 0;
                 font-size: 16px;
                 text-align: left;
@@ -41,7 +41,7 @@ def json_to_html(json_file, html_file):
             }
             th, td {
                 padding: 12px 15px;
-                border: 1px solid #bbb;  /* Bordure entre les cellules */
+                border: 1px solid #bbb;  /* Bordures visibles entre les colonnes */
             }
             th {
                 background: linear-gradient(135deg, #007bff, #0056b3);
@@ -70,6 +70,11 @@ def json_to_html(json_file, html_file):
                 color: #155724;
                 font-weight: bold;
             }
+            .critical {
+                background-color: #f5c6cb;  /* Rouge foncé pour les niveaux critiques */
+                color: #721c24;
+                font-weight: bold;
+            }
         </style>
     </head>
     <body>
@@ -89,6 +94,8 @@ def json_to_html(json_file, html_file):
                 severity_class = "high"
             elif vuln.get('Severity') == "MEDIUM":
                 severity_class = "medium"
+            elif vuln.get('Severity') == "CRITICAL":
+                severity_class = "critical"
 
             html_content += f"""
             <tr class="{severity_class}">
