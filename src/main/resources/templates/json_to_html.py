@@ -36,16 +36,12 @@ def json_to_html(json_file, html_file):
                 box-shadow: 0 2px 15px rgba(0, 0, 0, 0.1);
             }
             th, td {
-                border: 1px solid #ddd;  /* Ajouter des bordures */
+                border: 1px solid #ddd;
                 padding: 12px 15px;
             }
             th {
                 background-color: #343a40;
                 color: #fff;
-                border-right: 1px solid #bbb;  /* Bordure verticale entre les colonnes */
-            }
-            td {
-                border-right: 1px solid #bbb;  /* Bordure verticale entre les colonnes */
             }
             tr:nth-child(even) {
                 background-color: #f2f2f2;
@@ -54,10 +50,24 @@ def json_to_html(json_file, html_file):
                 background-color: #d6e9c6;
                 transition: 0.2s;
             }
+            #download-button {
+                margin: 20px;
+                padding: 10px 20px;
+                background-color: #28a745;
+                color: white;
+                border: none;
+                border-radius: 5px;
+                cursor: pointer;
+                font-size: 16px;
+            }
+            #download-button:hover {
+                background-color: #218838;
+            }
         </style>
     </head>
     <body>
         <h1>Trivy Vulnerability Report</h1>
+        <button id="download-button" onclick="downloadReport()">Download Report</button>
     """
 
     # Ajouter les détails des vulnérabilités
@@ -77,8 +87,16 @@ def json_to_html(json_file, html_file):
 
         html_content += "</table>"
 
-    # Fin du document HTML
+    # Ajouter le script pour le téléchargement
     html_content += """
+        <script>
+            function downloadReport() {
+                var link = document.createElement('a');
+                link.href = window.location.href;
+                link.download = 'trivy-vulnerability-report.html';
+                link.click();
+            }
+        </script>
     </body>
     </html>
     """
