@@ -31,8 +31,7 @@ def json_to_html(json_file, html_file):
             }
             table {
                 width: 90%;
-                border-collapse: separate;
-                border-spacing: 0;
+                border-collapse: collapse;
                 margin: 20px 0;
                 font-size: 16px;
                 text-align: left;
@@ -42,7 +41,7 @@ def json_to_html(json_file, html_file):
             }
             th, td {
                 padding: 12px 15px;
-                border-bottom: 1px solid #e0e0e0;
+                border: 1px solid #bbb;  /* Bordure entre les cellules */
             }
             th {
                 background: linear-gradient(135deg, #007bff, #0056b3);
@@ -50,46 +49,31 @@ def json_to_html(json_file, html_file):
                 font-weight: bold;
             }
             tr:nth-child(even) {
-                background-color: #f9f9f9;
+                background-color: #f2f2f2;  /* Lignes paires */
             }
             tr:hover {
-                background-color: #e3f2fd;
+                background-color: #e3f2fd;  /* Survol */
                 transition: 0.3s;
             }
-            #download-button {
-                margin: 20px;
-                padding: 12px 24px;
-                background: linear-gradient(135deg, #28a745, #218838);
-                color: white;
-                border: none;
-                border-radius: 5px;
-                cursor: pointer;
-                font-size: 18px;
+            .high {
+                background-color: #f8d7da;  /* Rouge pâle pour les niveaux élevés */
+                color: #721c24;
                 font-weight: bold;
-                box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
-                transition: background 0.3s, box-shadow 0.3s;
             }
-            #download-button:hover {
-                background: linear-gradient(135deg, #218838, #1e7e34);
-                box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+            .medium {
+                background-color: #fff3cd;  /* Orange pâle pour les niveaux moyens */
+                color: #856404;
+                font-weight: bold;
             }
-            #zip-link {
-                margin-bottom: 10px;
-                display: inline-block;
-                font-size: 18px;
-                color: #007bff;
-                text-decoration: none;
-            }
-            #zip-link:hover {
-                text-decoration: underline;
+            .low {
+                background-color: #d4edda;  /* Vert pâle pour les niveaux faibles */
+                color: #155724;
+                font-weight: bold;
             }
         </style>
-        <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.9.2/html2pdf.bundle.min.js"></script>
     </head>
     <body>
         <h1>Trivy Vulnerability Report</h1>
-        <a href="#" id="zip-link">Zip</a>
-        <button id="download-button" onclick="downloadPDF()">PDF</button>
     """
 
     # Ajouter les détails des vulnérabilités
@@ -99,25 +83,25 @@ def json_to_html(json_file, html_file):
         html_content += "<tr><th>Vulnerability ID</th><th>Severity</th><th>Description</th></tr>"
 
         for vuln in result.get("Vulnerabilities", []):
-            severity_color = "#dc3545" if vuln.get('Severity') == "HIGH" else "#ffc107"
+            # Ajouter une classe CSS en fonction de la gravité
+            severity_class = "low"
+            if vuln.get('Severity') == "HIGH":
+                severity_class = "high"
+            elif vuln.get('Severity') == "MEDIUM":
+                severity_class = "medium"
+
             html_content += f"""
-            <tr>
+            <tr class="{severity_class}">
                 <td>{vuln.get('VulnerabilityID')}</td>
-                <td style="color: {severity_color}; font-weight: bold;">{vuln.get('Severity')}</td>
+                <td>{vuln.get('Severity')}</td>
                 <td>{vuln.get('Title')}</td>
             </tr>
             """
 
         html_content += "</table>"
 
-    # Ajouter le script pour le téléchargement en PDF
+    # Fin du document HTML
     html_content += """
-        <script>
-            function downloadPDF() {
-                const element = document.body;
-                html2pdf().from(element).save('trivy-vulnerability-report.pdf');
-            }
-        </script>
     </body>
     </html>
     """
