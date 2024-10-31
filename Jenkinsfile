@@ -90,12 +90,22 @@ pipeline {
 
         
         }
-        stage("Deploy with Docker Compose") {
+        // stage("Deploy with Docker Compose") {
+        //     steps {
+        //         sh 'docker-compose down'  
+        //         sh 'docker-compose up -d'  
+        //     }
+        // }
+        stage("Deploy to Kubernetes") {
             steps {
-                sh 'docker-compose down'  
-                sh 'docker-compose up -d'  
+                script {
+                    withKubeConfig([credentialsId: 'kubernetes-config']) {
+                        sh 'kubectl apply -f kubernetes-deployment-manifest.yml'
+                        sh 'kubectl rollout restart deployment devopsproject-app'
+                    }
+                }
             }
-        }
+        }   
     }
 
     post {

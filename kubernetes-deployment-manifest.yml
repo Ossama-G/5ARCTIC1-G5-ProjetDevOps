@@ -1,0 +1,130 @@
+# mysql-secret.yaml
+apiVersion: v1
+kind: Secret
+metadata:
+  name: mysql-secret
+type: Opaque
+data:
+  MYSQL_ROOT_PASSWORD: cm9vdA==  # 'root' in base64
+  MYSQL_PASSWORD: cm9vdA==      # 'root' in base64
+---
+# mysql-pv.yaml
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: mysql-pv
+spec:
+  capacity:
+    storage: 1Gi
+  accessModes:
+    - ReadWriteOnce
+  hostPath:
+    path: "/mnt/data"
+---
+# mysql-pvc.yaml
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: mysql-pvc
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi
+---
+# mysql-deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mysql
+spec:
+  selector:
+    matchLabels:
+      app: mysql
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app: mysql
+    spec:
+      containers:
+      - name: mysql
+        image: mysql:latest
+        env:
+        - name: MYSQL_DATABASE
+          value: stationSki
+        - name: MYSQL_ROOT_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: mysql-secret
+              key: MYSQL_ROOT_PASSWORD
+        ports:
+        - containerPort: 3306
+          name: mysql
+        volumeMounts:
+        - name: mysql-persistent-storage
+          mountPath: /var/lib/mysql
+      volumes:
+      - name: mysql-persistent-storage
+        persistentVolumeClaim:
+          claimName: mysql-pvc
+---
+# mysql-service.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: mysql
+spec:
+  ports:
+  - port: 3306
+  selector:
+    app: mysql
+  clusterIP: None
+---
+# app-deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: devopsproject-app
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: devopsproject-app
+  template:
+    metadata:
+      labels:
+        app: devopsproject-app
+    spec:
+      containers:
+      - name: devopsproject-app
+        image: 47746/devopsproject-production-e2e-pipeline:latest
+        ports:
+        - containerPort: 8089
+        env:
+        - name: MYSQL_HOST
+          value: mysql
+        - name: MYSQL_USER
+          value: root
+        - name: MYSQL_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: mysql-secret
+              key: MYSQL_PASSWORD
+        - name: MYSQL_PORT
+          value: "3306"
+---
+# app-service.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: devopsproject-app
+spec:
+  type: LoadBalancer
+  ports:
+  - port: 8089
+    targetPort: 8089
+  selector:
+    app: devopsproject-app
