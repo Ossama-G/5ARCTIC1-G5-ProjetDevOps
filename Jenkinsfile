@@ -12,6 +12,7 @@ pipeline {
         DOCKER_PASS = 'dockerhub'
         IMAGE_NAME = "${DOCKER_USER}/${APP_NAME}"
         IMAGE_TAG = "latest"
+        JENKINS_API_TOKEN = credentials("JENKINS_API_TOKEN")
     }
 
     stages {
@@ -123,3 +124,20 @@ pipeline {
         }
     }
 }
+        // stage("Deploy with Docker Compose") {
+        //     steps {
+        //         sh 'docker-compose down'  
+        //         sh 'docker-compose up -d'  
+        //     }
+        // }
+
+        // stage("Deploy to Kubernetes") {
+        //     steps {
+        //         script {
+        //             withKubeConfig([credentialsId: 'kubernetes-config']) {
+        //                 sh 'kubectl apply -f kubernetes-deployment-manifest.yml'
+        //                 sh 'kubectl rollout restart deployment devopsproject-app'
+        //             }
+        //         }
+        //     }
+        // }   
