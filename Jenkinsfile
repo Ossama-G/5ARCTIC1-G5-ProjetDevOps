@@ -16,11 +16,13 @@ pipeline {
     }
 
     stages {
-        stage("Cleanup Workspace") {
+        stage("Cleanup Workspace"){
             steps {
                 cleanWs()
             }
+
         }
+
 
         stage('Checkout') {
             steps {
@@ -28,18 +30,18 @@ pipeline {
             }
         }
 
-        stage("Build Application") {
+        stage("Build Application"){
             steps {
                 sh "mvn clean package"
             }
-        }
 
-        stage("Test Application") {
+        }
+        stage("Test Application"){
             steps {
                 sh "mvn test"
             }
-        }
 
+        }
         stage("Sonarqube Analysis") {
             steps {
                 script {
@@ -48,6 +50,7 @@ pipeline {
                     }
                 }
             }
+
         }
 
         stage('Quality Gate') {
@@ -58,12 +61,11 @@ pipeline {
             }
         }
 
-        stage('Code Coverage Report') {
+         stage('Code Coverage Report') {
             steps {
                 sh 'mvn jacoco:report'
             }
         }
-
         stage('Deploy to Nexus') {
             steps {
                 withCredentials([usernamePassword(credentialsId: 'nexus-credentials', usernameVariable: 'NEXUS_USER', passwordVariable: 'NEXUS_PASS')]) {
@@ -75,18 +77,37 @@ pipeline {
         stage("Build & Push Docker Image") {
             steps {
                 script {
-                    docker.withRegistry('', DOCKER_PASS) {
+                    docker.withRegistry('',DOCKER_PASS) {
                         docker_image = docker.build "${IMAGE_NAME}"
                     }
 
-                    docker.withRegistry('', DOCKER_PASS) {
+                    docker.withRegistry('',DOCKER_PASS) {
                         docker_image.push("${IMAGE_TAG}")
                         docker_image.push('latest')
                     }
                 }
             }
-        }
 
+
+        
+        }
+        // stage("Deploy with Docker Compose") {
+        //     steps {
+        //         sh 'docker-compose down'  
+        //         sh 'docker-compose up -d'  
+        //     }
+        // }
+
+        // stage("Deploy to Kubernetes") {
+        //     steps {
+        //         script {
+        //             withKubeConfig([credentialsId: 'kubernetes-config']) {
+        //                 sh 'kubectl apply -f kubernetes-deployment-manifest.yml'
+        //                 sh 'kubectl rollout restart deployment devopsproject-app'
+        //             }
+        //         }
+        //     }
+        // }   
         stage("Trigger CD Pipeline") {
             steps {
                 script {
@@ -108,21 +129,3 @@ pipeline {
         }
     }
 }
-
-        // stage("Deploy with Docker Compose") {
-        //     steps {
-        //         sh 'docker-compose down'  
-        //         sh 'docker-compose up -d'  
-        //     }
-        // }
-
-        // stage("Deploy to Kubernetes") {
-        //     steps {
-        //         script {
-        //             withKubeConfig([credentialsId: 'kubernetes-config']) {
-        //                 sh 'kubectl apply -f kubernetes-deployment-manifest.yml'
-        //                 sh 'kubectl rollout restart deployment devopsproject-app'
-        //             }
-        //         }
-        //     }
-        // }   
