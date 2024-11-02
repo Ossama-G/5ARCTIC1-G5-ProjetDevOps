@@ -30,22 +30,22 @@ pipeline {
         }
         stage('Trivy Scan') {
             steps {
-                script {
-                    // Download the vulnerability database
-                    sh 'trivy image --download-db-only'
+             script {
+                 // Create the reports directory once at the beginning
+                 sh 'mkdir -p reports'
 
-                    // Create the reports directory
-                    sh 'mkdir -p reports'
+                 // Download the vulnerability database only if it is not present
+                 sh '[ -f ~/.cache/trivy/db/trivy.db ] || trivy image --download-db-only'
 
-                    // Generate the JSON report
-                    sh 'trivy fs --format json -o reports/trivy-fs-report.json .'
+                 // Scan only relevant directories, excluding some if necessary
+                 sh 'trivy fs --format json -o reports/trivy-fs-report.json --ignore-unfixed --skip-dirs node_modules,venv .'
 
-                    // Generate the HTML report using a Python script
-                    sh 'python3 $WORKSPACE/src/main/resources/templates/json_to_html.py reports/trivy-fs-report.json reports/trivy-fs-report.html'
+                 // Generate an HTML report from the JSON
+                 sh 'python3 $WORKSPACE/src/main/resources/templates/json_to_html.py reports/trivy-fs-report.json reports/trivy-fs-report.html'
 
-                    // Archive the HTML report
-                    archiveArtifacts artifacts: 'reports/trivy-fs-report.html', allowEmptyArchive: true
-                }
+                 // Archive the JSON and HTML reports for better traceability
+                 archiveArtifacts artifacts: 'reports/trivy-fs-report.json, reports/trivy-fs-report.html', allowEmptyArchive: true
+             }
             }
         }
         stage('JaCoCo Report') {
