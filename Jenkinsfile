@@ -110,14 +110,8 @@ pipeline {
         // }   
         stage("Trigger CD Pipeline") {
             steps {
-                withCredentials([string(credentialsId: 'JENKINS_API_TOKEN', variable: 'TOKEN')]) {
-                    sh """
-                        curl -v -k --user admin:$TOKEN -X POST \\
-                        -H 'cache-control: no-cache' \\
-                        -H 'content-type: application/x-www-form-urlencoded' \\
-                        --data 'IMAGE_TAG=${IMAGE_TAG}' \\
-                        'http://localhost:8080/job/gitops-complete-pipeline/buildWithParameters?token=gitops-token'
-                    """
+                script {
+                    sh "curl -v -k --user admin:${JENKINS_API_TOKEN} -X POST -H 'cache-control: no-cache' -H 'content-type: application/x-www-form-urlencoded' --data 'IMAGE_TAG=${IMAGE_TAG}' 'http://localhost:8080/job/gitops-complete-pipeline/buildWithParameters?token=gitops-token'"
                 }
             }
         }
