@@ -4,8 +4,8 @@ pipeline {
         githubPush()
     }
     environment {
-            IMAGE_NAME = "gammoudioussama/skier-app"
-            IMAGE_TAG = "v1.0-dev"
+        IMAGE_NAME = "gammoudioussama/skier-app"
+        IMAGE_TAG = "v1.0-dev"
     }
 
     stages {
@@ -27,7 +27,7 @@ pipeline {
             }
         }
 
-        stage('Vulnerability Scan Using Trivy') {
+        stage('Vulnerability Scan Using Trivy on Source Code') {
             steps {
                 script {
                     // Créer le dossier pour les rapports une seule fois au début
@@ -42,8 +42,8 @@ pipeline {
                     // Générer un rapport HTML à partir du JSON
                     sh 'python3 $WORKSPACE/src/main/resources/templates/json_to_html.py reports/trivy-fs-report.json reports/trivy-fs-report.html'
 
-                    // Archiver les rapports JSON et HTML pour une meilleure traçabilité
-                    archiveArtifacts artifacts: 'reports/trivy-fs-report.json, reports/trivy-fs-report.html', allowEmptyArchive: true
+                    // Archiver uniquement le rapport HTML
+                    archiveArtifacts artifacts: 'reports/trivy-fs-report.html', allowEmptyArchive: true
                 }
             }
         }
@@ -82,20 +82,33 @@ pipeline {
             steps {
                 script {
                     // Construire l'image Docker avec le tag spécifié
-                    sh "docker build -t ${imageName}:${imageTag} ."
+                    sh "docker build -t ${env.IMAGE_NAME}:${env.IMAGE_TAG} ."
                 }
             }
         }
 
-        stage('Push Docker Image') {
+        stage('Vulnerability Scan Using Trivy on Docker Image') {
+            steps {
+                script {
+                    // Scanner l'image Docker pour les vulnérabilités
+                    sh "trivy image --format json -o reports/trivy-image-report.json ${env.IMAGE_NAME}:${env.IMAGE_TAG}"
+
+                    // Générer un rapport HTML pour l'image Docker
+                    sh "python3 $WORKSPACE/src/main/resources/templates/json_to_html.py reports/trivy-image-report.json reports/trivy-image-report.html"
+
+                    archiveArtifacts artifacts: 'reports/trivy-image-report.html', allowEmptyArchive: true
+                }
+            }
+        }
+
+        stage('Push Docker Image to DockerHub') {
             steps {
                 script {
                     withCredentials([usernamePassword(credentialsId: 'docker-cred', usernameVariable: 'DOCKER_USERNAME', passwordVariable: 'DOCKER_PASSWORD')]) {
                         // Authentification auprès de Docker Hub
                         sh 'echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin'
 
-                        // Pousser l'image Docker avec le tag de développement
-                        sh "docker push ${imageName}:${imageTag}"
+                        sh "docker push ${env.IMAGE_NAME}:${env.IMAGE_TAG}"
                     }
                 }
             }
@@ -125,19 +138,15 @@ pipeline {
                 </html>
                 """
 
-                try {
-                    emailext (
-                        subject: "${env.JOB_NAME} - Build ${env.BUILD_NUMBER} - ${pipelineStatus}",
-                        body: body,
-                        to: 'ossama.gammoudii@gmail.com',
-                        from: 'ossama.gammoudii@gmail.com',
-                        replyTo: 'ossama.gammoudii@gmail.com',
-                        mimeType: 'text/html',
-                        attachmentsPattern: 'reports/trivy-fs-report.html'
-                    )
-                } catch (Exception e) {
-                    echo "Error sending email: ${e.getMessage()}"
-                }
+                emailext (
+                    subject: "${env.JOB_NAME} - Build ${env.BUILD_NUMBER} - ${pipelineStatus}",
+                    body: body,
+                    to: 'ossama.gammoudii@gmail.com',
+                    from: 'ossama.gammoudii@gmail.com',
+                    replyTo: 'ossama.gammoudii@gmail.com',
+                    mimeType: 'text/html',
+                    attachmentsPattern: 'reports/trivy-fs-report.html, reports/trivy-image-report.html'
+                )
             }
         }
 
@@ -163,19 +172,15 @@ pipeline {
                 </html>
                 """
 
-                try {
-                    emailext (
-                        subject: "${env.JOB_NAME} - Build ${env.BUILD_NUMBER} - ${pipelineStatus}",
-                        body: body,
-                        to: 'ossama.gammoudii@gmail.com',
-                        from: 'ossama.gammoudii@gmail.com',
-                        replyTo: 'ossama.gammoudii@gmail.com',
-                        mimeType: 'text/html',
-                        attachmentsPattern: 'reports/trivy-fs-report.html'
-                    )
-                } catch (Exception e) {
-                    echo "Error sending email: ${e.getMessage()}"
-                }
+                emailext (
+                    subject: "${env.JOB_NAME} - Build ${env.BUILD_NUMBER} - ${pipelineStatus}",
+                    body: body,
+                    to: 'ossama.gammoudii@gmail.com',
+                    from: 'ossama.gammoudii@gmail.com',
+                    replyTo: 'ossama.gammoudii@gmail.com',
+                    mimeType: 'text/html',
+                    attachmentsPattern: 'reports/trivy-fs-report.html, reports/trivy-image-report.html'
+                )
             }
         }
 
