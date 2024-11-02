@@ -26,21 +26,21 @@ pipeline {
         stage('Vulnerability Scan Using Trivy') {
             steps {
                 script {
-                    // Télécharger la base de données de vulnérabilités
-                    sh 'trivy image --download-db-only'
+                    // Créer le dossier pour les rapports une seule fois au début
+                    sh 'mkdir -p reports'
+
+                    // Télécharger la base de données de vulnérabilités seulement si elle n'est pas présente
+                    sh '[ -f ~/.cache/trivy/db/trivy.db ] || trivy image --download-db-only'
+
+                    // Scanner uniquement les dossiers pertinents, en excluant certains si nécessaire
+                    sh 'trivy fs --format json -o reports/trivy-fs-report.json --ignore-unfixed --skip-dirs node_modules,venv .'
+
+                    // Générer un rapport HTML à partir du JSON
+                    sh 'python3 $WORKSPACE/src/main/resources/templates/json_to_html.py reports/trivy-fs-report.json reports/trivy-fs-report.html'
+
+                    // Archiver les rapports JSON et HTML pour une meilleure traçabilité
+                    archiveArtifacts artifacts: 'reports/trivy-fs-report.json, reports/trivy-fs-report.html', allowEmptyArchive: true
                 }
-
-                // Créer le dossier pour les rapports
-                sh 'mkdir -p reports'
-
-                // Générer le rapport JSON à partir de Trivy
-                sh 'trivy fs --format json -o reports/trivy-fs-report.json .'
-
-                // Générer un rapport HTML lisible en utilisant le script Python
-                sh 'python3 $WORKSPACE/src/main/resources/templates/json_to_html.py reports/trivy-fs-report.json reports/trivy-fs-report.html'
-
-                // Archiver le rapport HTML généré
-                archiveArtifacts artifacts: 'reports/trivy-fs-report.html', allowEmptyArchive: true
             }
         }
 
@@ -86,27 +86,31 @@ pipeline {
                 <html>
                     <body style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; color: #333; padding: 0; margin: 0;">
                         <div style="margin: 20px; padding: 20px; border-radius: 10px; background: ${gradientColor}; box-shadow: 0 4px 12px rgba(0,0,0,0.1); text-align: center;">
-                            <h1 style="color: white; margin: 0; font-size: 2em;">${emoji} ${jobName} - Build ${buildNumber}</h1>
+                            <h1 style="color: white; margin: 0; font-size: 2em;">${emoji} ${env.JOB_NAME} - Build ${env.BUILD_NUMBER}</h1>
                             <p style="color: white; margin: 10px 0; font-size: 1.2em; padding: 10px; border-radius: 5px; background-color: rgba(0,0,0,0.2); display: inline-block;">
                                 Pipeline Status: <strong>${pipelineStatus}</strong>
                             </p>
                             <p style="margin: 20px 0; font-size: 1.1em;">
-                                Check the <a href="${BUILD_URL}" style="color: #ffffff; text-decoration: underline; font-weight: bold;">console output</a>.
+                                Check the <a href="${env.BUILD_URL}" style="color: #ffffff; text-decoration: underline; font-weight: bold;">console output</a>.
                             </p>
                         </div>
                     </body>
                 </html>
                 """
 
-                emailext (
-                    subject: "${jobName} - Build ${buildNumber} - ${pipelineStatus}",
-                    body: body,
-                    to: 'ossama.gammoudii@gmail.com',
-                    from: 'ossama.gammoudii@gmail.com',
-                    replyTo: 'ossama.gammoudii@gmail.com',
-                    mimeType: 'text/html',
-                    attachmentsPattern: 'reports/trivy-fs-report.html'
-                )
+                try {
+                    emailext (
+                        subject: "${env.JOB_NAME} - Build ${env.BUILD_NUMBER} - ${pipelineStatus}",
+                        body: body,
+                        to: 'ossama.gammoudii@gmail.com',
+                        from: 'ossama.gammoudii@gmail.com',
+                        replyTo: 'ossama.gammoudii@gmail.com',
+                        mimeType: 'text/html',
+                        attachmentsPattern: 'reports/trivy-fs-report.html'
+                    )
+                } catch (Exception e) {
+                    echo "Error sending email: ${e.getMessage()}"
+                }
             }
         }
 
@@ -120,27 +124,31 @@ pipeline {
                 <html>
                     <body style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; color: #333; padding: 0; margin: 0;">
                         <div style="margin: 20px; padding: 20px; border-radius: 10px; background: ${gradientColor}; box-shadow: 0 4px 12px rgba(0,0,0,0.1); text-align: center;">
-                            <h1 style="color: white; margin: 0; font-size: 2em;">${emoji} ${jobName} - Build ${buildNumber}</h1>
+                            <h1 style="color: white; margin: 0; font-size: 2em;">${emoji} ${env.JOB_NAME} - Build ${env.BUILD_NUMBER}</h1>
                             <p style="color: white; margin: 10px 0; font-size: 1.2em; padding: 10px; border-radius: 5px; background-color: rgba(0,0,0,0.2); display: inline-block;">
                                 Pipeline Status: <strong>${pipelineStatus}</strong>
                             </p>
                             <p style="margin: 20px 0; font-size: 1.1em;">
-                                Check the <a href="${BUILD_URL}" style="color: #ffffff; text-decoration: underline; font-weight: bold;">console output</a>.
+                                Check the <a href="${env.BUILD_URL}" style="color: #ffffff; text-decoration: underline; font-weight: bold;">console output</a>.
                             </p>
                         </div>
                     </body>
                 </html>
                 """
 
-                emailext (
-                    subject: "${jobName} - Build ${buildNumber} - ${pipelineStatus}",
-                    body: body,
-                    to: 'ossama.gammoudii@gmail.com',
-                    from: 'ossama.gammoudii@gmail.com',
-                    replyTo: 'ossama.gammoudii@gmail.com',
-                    mimeType: 'text/html',
-                    attachmentsPattern: 'reports/trivy-fs-report.html'
-                )
+                try {
+                    emailext (
+                        subject: "${env.JOB_NAME} - Build ${env.BUILD_NUMBER} - ${pipelineStatus}",
+                        body: body,
+                        to: 'ossama.gammoudii@gmail.com',
+                        from: 'ossama.gammoudii@gmail.com',
+                        replyTo: 'ossama.gammoudii@gmail.com',
+                        mimeType: 'text/html',
+                        attachmentsPattern: 'reports/trivy-fs-report.html'
+                    )
+                } catch (Exception e) {
+                    echo "Error sending email: ${e.getMessage()}"
+                }
             }
         }
 
