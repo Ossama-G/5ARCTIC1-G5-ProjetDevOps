@@ -27,6 +27,13 @@ pipeline {
             }
         }
 
+        stage('Package') {
+            steps {
+               // Crée le fichier JAR dans le dossier target/
+                sh 'mvn package -DskipTests'
+            }
+        }
+
         stage('Vulnerability Scan Using Trivy on Source Code') {
             steps {
                 script {
