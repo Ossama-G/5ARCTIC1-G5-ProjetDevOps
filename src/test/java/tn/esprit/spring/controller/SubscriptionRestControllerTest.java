@@ -15,7 +15,6 @@ import java.util.Set;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.mock.mockito.MockBean;
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.http.MediaType;
@@ -28,7 +27,7 @@ import tn.esprit.spring.entities.TypeSubscription;
 import tn.esprit.spring.services.ISubscriptionServices;
 
 @WebMvcTest(SubscriptionRestController.class)
-public class SubscriptionRestControllerTest {
+class SubscriptionRestControllerTest {
 
     @Autowired
     private MockMvc mockMvc;
@@ -39,14 +38,14 @@ public class SubscriptionRestControllerTest {
     private Subscription subscription;
 
     @BeforeEach
-    public void setup() {
+    void setup() {
         subscription = new Subscription();
         subscription.setStartDate(LocalDate.of(2024, 1, 1));
         subscription.setTypeSub(TypeSubscription.ANNUAL);
     }
 
     @Test
-    public void testAddSubscription() throws Exception {
+    void testAddSubscription() throws Exception {
         when(subscriptionServices.addSubscription(any(Subscription.class))).thenReturn(subscription);
         mockMvc.perform(post("/subscription/add")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -56,7 +55,7 @@ public class SubscriptionRestControllerTest {
     }
 
     @Test
-    public void testGetById() throws Exception {
+    void testGetById() throws Exception {
         when(subscriptionServices.retrieveSubscriptionById(anyLong())).thenReturn(subscription);
         mockMvc.perform(get("/subscription/get/1"))
                 .andExpect(status().isOk())
@@ -64,7 +63,7 @@ public class SubscriptionRestControllerTest {
     }
 
     @Test
-    public void testGetSubscriptionsByType() throws Exception {
+    void testGetSubscriptionsByType() throws Exception {
         Set<Subscription> subscriptions = Collections.singleton(subscription);
         when(subscriptionServices.getSubscriptionByType(any(TypeSubscription.class))).thenReturn(subscriptions);
         mockMvc.perform(get("/subscription/all/ANNUAL"))
@@ -81,5 +80,4 @@ public class SubscriptionRestControllerTest {
             throw new RuntimeException(e);
         }
     }
-
 }
