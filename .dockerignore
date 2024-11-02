@@ -1,0 +1,24 @@
+# Ignorer les fichiers de logs
+*.log
+
+# Ignorer les fichiers de compilation
+target/
+*.class
+
+# Ignorer les fichiers de configuration de l'IDE
+.idea/
+*.iml
+*.ipr
+*.iws
+
+# Ignorer les fichiers Git
+.git/
+.gitignore
+
+# Ignorer les fichiers du système d'exploitation
+.DS_Store
+Thumbs.db
+
+# Ignorer d'autres fichiers inutiles
+README.md
+docker-compose.yml

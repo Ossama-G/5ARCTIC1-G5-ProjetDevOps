@@ -3,6 +3,10 @@ pipeline {
     triggers {
         githubPush()
     }
+    environment {
+            IMAGE_NAME = "gammoudioussama/skier-app"
+            IMAGE_TAG = "v1.0-dev"
+    }
 
     stages {
         stage('Checkout') {
@@ -70,6 +74,29 @@ pipeline {
             steps {
                 withMaven(globalMavenSettingsConfig: 'global-settings', jdk: 'JAVA_HOME', maven: 'M2_HOME') {
                     sh 'mvn deploy -X'
+                }
+            }
+        }
+
+        stage('Build & Tag Docker Image') {
+            steps {
+                script {
+                    // Construire l'image Docker avec le tag spécifié
+                    sh "docker build -t ${imageName}:${imageTag} ."
+                }
+            }
+        }
+
+        stage('Push Docker Image') {
+            steps {
+                script {
+                    withCredentials([usernamePassword(credentialsId: 'docker-cred', usernameVariable: 'DOCKER_USERNAME', passwordVariable: 'DOCKER_PASSWORD')]) {
+                        // Authentification auprès de Docker Hub
+                        sh 'echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin'
+
+                        // Pousser l'image Docker avec le tag de développement
+                        sh "docker push ${imageName}:${imageTag}"
+                    }
                 }
             }
         }
