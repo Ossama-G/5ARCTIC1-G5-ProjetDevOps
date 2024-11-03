@@ -137,6 +137,14 @@
 						<goals>
 							<goal>report</goal>
 						</goals>
+						<configuration>
+							<excludes>
+								<exclude>**/tn/esprit/spring/configs/**</exclude>
+								<exclude>**/tn/esprit/spring/repositories/**</exclude>
+								<exclude>**/tn/esprit/spring/utils/**</exclude>
+								<!-- Add other packages you want to exclude -->
+							</excludes>
+						</configuration>
 					</execution>
 				</executions>
 			</plugin>
