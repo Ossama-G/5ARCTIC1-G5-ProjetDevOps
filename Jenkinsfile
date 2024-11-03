@@ -131,18 +131,21 @@ pipeline {
         }
 
         stage('Push Docker Image to Nexus') {
-                   steps {
-                       script {
-                           withCredentials([usernamePassword(credentialsId: 'nexus-cred', usernameVariable: 'NEXUS_USERNAME', passwordVariable: 'NEXUS_PASSWORD')]) {
-                               // Connexion à Nexus en utilisant la variable NEXUS_REPOSITORY
-                               sh 'echo "$NEXUS_PASSWORD" | docker login -u "$NEXUS_USERNAME" --password-stdin http://${env.NEXUS_REPOSITORY.split("/")[0]}'
+            steps {
+                script {
+                    withCredentials([usernamePassword(credentialsId: 'nexus-cred', usernameVariable: 'NEXUS_USERNAME', passwordVariable: 'NEXUS_PASSWORD')]) {
+                        // Extraire l'URL de base de Nexus en utilisant shell
+                        def nexusUrlBase = env.NEXUS_REPOSITORY.tokenize('/')[0]
 
-                               // Tag et push de l'image vers Nexus en utilisant NEXUS_REPOSITORY
-                               sh "docker tag ${env.IMAGE_NAME}:${env.IMAGE_TAG} ${env.NEXUS_REPOSITORY}/${env.IMAGE_NAME}:${env.IMAGE_TAG}"
-                               sh "docker push ${env.NEXUS_REPOSITORY}/${env.IMAGE_NAME}:${env.IMAGE_TAG}"
-                           }
-                       }
-                   }
+                        // Connexion à Nexus
+                        sh 'echo "$NEXUS_PASSWORD" | docker login -u "$NEXUS_USERNAME" --password-stdin http://${nexusUrlBase}'
+
+                        // Pousser l'image vers Nexus
+                        sh "docker tag ${env.IMAGE_NAME}:${env.IMAGE_TAG} ${env.NEXUS_REPOSITORY}/${env.IMAGE_NAME}:${env.IMAGE_TAG}"
+                        sh "docker push ${env.NEXUS_REPOSITORY}/${env.IMAGE_NAME}:${env.IMAGE_TAG}"
+                    }
+                }
+            }
         }
     }
 
