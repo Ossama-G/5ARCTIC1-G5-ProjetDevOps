@@ -1,0 +1,39 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: gestion-station-ski
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: gestion-station-ski
+  template:
+    metadata:
+      labels:
+        app: gestion-station-ski
+    spec:
+      containers:
+        - name: gestion-station-ski
+          image: achref10/gestion-station-ski:1.0
+          ports:
+            - containerPort: 8089
+          env:
+            - name: SPRING_DATASOURCE_URL
+              value: jdbc:mysql://mysql:3306/skistation
+            - name: SPRING_DATASOURCE_USERNAME
+              value: achref
+            - name: SPRING_DATASOURCE_PASSWORD
+              value: achref
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: gestion-station-ski-service
+spec:
+  type: NodePort
+  selector:
+    app: gestion-station-ski
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 8089
