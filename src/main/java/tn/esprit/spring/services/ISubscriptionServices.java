@@ -16,6 +16,7 @@ public interface ISubscriptionServices {
 	Subscription retrieveSubscriptionById(Long numSubscription);
 
 	Set<Subscription> getSubscriptionByType(TypeSubscription type);
+	List<Subscription> getAll();
 
 	List<Subscription> retrieveSubscriptionsByDates(LocalDate startDate, LocalDate endDate);
 

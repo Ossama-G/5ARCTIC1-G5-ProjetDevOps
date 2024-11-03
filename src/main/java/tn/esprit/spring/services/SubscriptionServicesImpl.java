@@ -55,6 +55,11 @@ public class SubscriptionServicesImpl implements ISubscriptionServices{
     }
 
     @Override
+    public List<Subscription> getAll() {
+        return subscriptionRepository.findDistinctOrderByEndDateAsc();
+    }
+
+    @Override
     public List<Subscription> retrieveSubscriptionsByDates(LocalDate startDate, LocalDate endDate) {
         return subscriptionRepository.getSubscriptionsByStartDateBetween(startDate, endDate);
     }
