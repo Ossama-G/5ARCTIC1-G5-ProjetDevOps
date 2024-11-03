@@ -81,6 +81,11 @@ public class RegistrationServicesImpl implements IRegistrationServices {
     }
 
     private Registration handleCourseRegistration(Registration registration, Skier skier, Course course, int ageSkieur) {
+        if (course.getTypeCourse() == null) {
+            log.error("Course type is null");
+            return null;
+        }
+
         switch (course.getTypeCourse()) {
             case INDIVIDUAL:
                 log.info("add without tests");

@@ -2,14 +2,14 @@ package tn.esprit.spring.controller;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.when;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 import java.time.LocalDate;
 import java.util.Collections;
+import java.util.List;
 import java.util.Set;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -22,6 +22,7 @@ import org.springframework.test.web.servlet.MockMvc;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import tn.esprit.spring.controllers.SubscriptionRestController;
+import tn.esprit.spring.dto.SubscriptionDTO;
 import tn.esprit.spring.entities.Subscription;
 import tn.esprit.spring.entities.TypeSubscription;
 import tn.esprit.spring.services.ISubscriptionServices;
@@ -67,6 +68,26 @@ class SubscriptionRestControllerTest {
         Set<Subscription> subscriptions = Collections.singleton(subscription);
         when(subscriptionServices.getSubscriptionByType(any(TypeSubscription.class))).thenReturn(subscriptions);
         mockMvc.perform(get("/subscription/all/ANNUAL"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.length()").value(1));
+    }
+
+    @Test
+    void testUpdateSubscription() throws Exception {
+        when(subscriptionServices.updateSubscription(any(Subscription.class))).thenReturn(subscription);
+        mockMvc.perform(put("/subscription/update")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(asJsonString(subscription)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.typeSub").value(TypeSubscription.ANNUAL.toString()));
+    }
+
+    @Test
+    void testGetSubscriptionsByDates() throws Exception {
+        List<Subscription> subscriptions = Collections.singletonList(subscription);
+        when(subscriptionServices.retrieveSubscriptionsByDates(any(LocalDate.class), any(LocalDate.class))).thenReturn(subscriptions);
+        mockMvc.perform(get("/subscription/all/2024-01-01/2024-12-31")
+                        .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.length()").value(1));
     }
