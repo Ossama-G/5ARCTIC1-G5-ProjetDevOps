@@ -6,6 +6,7 @@ pipeline {
     environment {
         IMAGE_NAME = "gammoudioussama/skier-app"
         IMAGE_TAG = "v1.0-dev-${env.BUILD_NUMBER}-${env.GIT_COMMIT.take(7)}"
+        NEXUS_REPOSITORY = "localhost:8082/docker-images"
     }
 
     stages {
@@ -128,6 +129,19 @@ pipeline {
                 }
             }
         }
+
+         stage('Push Docker Image to Nexus') {
+             steps {
+                 script {
+                     withCredentials([usernamePassword(credentialsId: 'nexus-cred', usernameVariable: 'NEXUS_USERNAME', passwordVariable: 'NEXUS_PASSWORD')]) {
+                         // Connexion à Nexus
+                         sh 'echo "$NEXUS_PASSWORD" | docker login -u "$NEXUS_USERNAME" --password-stdin http://localhost:8082'
+                         // Pousser l'image vers Nexus
+                         sh "docker push ${env.NEXUS_REPOSITORY}/${env.IMAGE_NAME}:${env.IMAGE_TAG}"
+                     }
+                 }
+             }
+         }
     }
 
     post {
