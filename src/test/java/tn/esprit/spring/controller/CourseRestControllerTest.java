@@ -9,7 +9,9 @@ import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import tn.esprit.spring.controllers.CourseRestController;
+import tn.esprit.spring.dto.CourseDTO;
 import tn.esprit.spring.entities.Course;
+import tn.esprit.spring.entities.TypeCourse;
 import tn.esprit.spring.services.ICourseServices;
 
 import java.util.Arrays;
@@ -17,10 +19,10 @@ import java.util.List;
 
 import static org.hamcrest.Matchers.is;
 import static org.mockito.ArgumentMatchers.any;
-
 import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+import static org.junit.jupiter.api.Assertions.*;
 
 class CourseRestControllerTest {
 
@@ -101,5 +103,62 @@ class CourseRestControllerTest {
                 .andExpect(jsonPath("$.level", is(3)));
 
         verify(courseServices, times(1)).updateCourse(any(Course.class));
+    }
+
+    @Test
+    void testConvertToDTO_NullTypeCourse() {
+        Course course = new Course();
+        course.setNumCourse(1L);
+        course.setLevel(2);
+        course.setPrice(100.0f); // Ensure price is a Float
+        course.setTimeSlot(4);
+        course.setTypeCourse(null);
+
+        CourseDTO courseDTO = courseRestController.convertToDTO(course);
+
+        assertNotNull(courseDTO);
+        assertEquals(1L, courseDTO.getNumCourse());
+        assertEquals(2, courseDTO.getLevel());
+        assertEquals(100.0f, courseDTO.getPrice());
+        assertEquals(4, courseDTO.getTimeSlot());
+        assertNull(courseDTO.getTypeCourse());
+    }
+
+    @Test
+    void testConvertToEntity_NullTypeCourse() {
+        CourseDTO courseDTO = new CourseDTO();
+        courseDTO.setNumCourse(1L);
+        courseDTO.setLevel(2);
+        courseDTO.setPrice(100.0f); // Ensure price is a Float
+        courseDTO.setTimeSlot(4);
+        courseDTO.setTypeCourse(null);
+
+        Course course = courseRestController.convertToEntity(courseDTO);
+
+        assertNotNull(course);
+        assertEquals(1L, course.getNumCourse());
+        assertEquals(2, course.getLevel());
+        assertEquals(100.0f, course.getPrice());
+        assertEquals(4, course.getTimeSlot());
+        assertNull(course.getTypeCourse());
+    }
+
+    @Test
+    void testConvertToEntity_WithTypeCourse() {
+        CourseDTO courseDTO = new CourseDTO();
+        courseDTO.setNumCourse(1L);
+        courseDTO.setLevel(2);
+        courseDTO.setPrice(100.0f); // Ensure price is a Float
+        courseDTO.setTimeSlot(4);
+        courseDTO.setTypeCourse("INDIVIDUAL");
+
+        Course course = courseRestController.convertToEntity(courseDTO);
+
+        assertNotNull(course);
+        assertEquals(1L, course.getNumCourse());
+        assertEquals(2, course.getLevel());
+        assertEquals(100.0f, course.getPrice());
+        assertEquals(4, course.getTimeSlot());
+        assertEquals(TypeCourse.INDIVIDUAL, course.getTypeCourse());
     }
 }

@@ -51,7 +51,7 @@ public class CourseRestController {
         return convertToDTO(updatedCourse);
     }
 
-    private CourseDTO convertToDTO(Course course) {
+    public CourseDTO convertToDTO(Course course) {
         CourseDTO courseDTO = new CourseDTO();
         courseDTO.setNumCourse(course.getNumCourse());
         courseDTO.setLevel(course.getLevel());
@@ -61,7 +61,7 @@ public class CourseRestController {
         return courseDTO;
     }
 
-    private Course convertToEntity(CourseDTO courseDTO) {
+    public Course convertToEntity(CourseDTO courseDTO) {
         Course course = new Course();
         course.setNumCourse(courseDTO.getNumCourse());
         course.setLevel(courseDTO.getLevel());

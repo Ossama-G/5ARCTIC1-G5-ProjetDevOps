@@ -9,13 +9,16 @@ import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import tn.esprit.spring.controllers.SkierRestController;
+import tn.esprit.spring.dto.SkierDTO;
 import tn.esprit.spring.entities.Skier;
 import tn.esprit.spring.entities.TypeSubscription;
 import tn.esprit.spring.services.ISkierServices;
 
+import java.time.LocalDate;
 import java.util.Arrays;
 import java.util.List;
 
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.*;
@@ -168,5 +171,24 @@ class SkierRestControllerTest {
                 .andExpect(jsonPath("$.length()").value(2));
 
         verify(skierServices, times(1)).retrieveAllSkiers();
+    }
+
+    @Test
+    void testConvertToEntity() {
+        SkierDTO skierDTO = new SkierDTO();
+        skierDTO.setNumSkier(1L);
+        skierDTO.setFirstName("John");
+        skierDTO.setLastName("Doe");
+        skierDTO.setDateOfBirth(LocalDate.of(1990, 1, 1));
+        skierDTO.setCity("City");
+
+        Skier skier = skierRestController.convertToEntity(skierDTO);
+
+        assertNotNull(skier);
+        assertEquals(skierDTO.getNumSkier(), skier.getNumSkier());
+        assertEquals(skierDTO.getFirstName(), skier.getFirstName());
+        assertEquals(skierDTO.getLastName(), skier.getLastName());
+        assertEquals(skierDTO.getDateOfBirth(), skier.getDateOfBirth());
+        assertEquals(skierDTO.getCity(), skier.getCity());
     }
 }

@@ -93,7 +93,7 @@ public class SkierRestController {
         return skierDTO;
     }
 
-    private Skier convertToEntity(SkierDTO skierDTO) {
+    public Skier convertToEntity(SkierDTO skierDTO) {
         Skier skier = new Skier();
         skier.setNumSkier(skierDTO.getNumSkier());
         skier.setFirstName(skierDTO.getFirstName());

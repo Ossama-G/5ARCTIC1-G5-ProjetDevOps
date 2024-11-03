@@ -139,4 +139,18 @@ class InstructorServicesImplTest {
         verify(courseRepository, times(1)).findById(courseId);
         verify(instructorRepository, never()).save(instructor); // Assure que save n'est jamais appelé
     }
+
+    @Test
+    void testAddInstructorAndAssignToCourse_CourseIsNull() {
+        Instructor instructor = new Instructor();
+        instructor.setFirstName("John");
+
+        when(courseRepository.findById(anyLong())).thenReturn(Optional.empty());
+
+        Instructor result = instructorServices.addInstructorAndAssignToCourse(instructor, 1L);
+
+        assertNull(result); // Vérifie que la méthode retourne null quand le cours est null
+        verify(courseRepository, times(1)).findById(anyLong());
+        verify(instructorRepository, never()).save(instructor); // Assure que save n'est jamais appelé
+    }
 }

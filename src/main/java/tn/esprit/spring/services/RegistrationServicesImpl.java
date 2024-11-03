@@ -80,7 +80,7 @@ public class RegistrationServicesImpl implements IRegistrationServices {
         return Period.between(dateOfBirth, LocalDate.now()).getYears();
     }
 
-    private Registration handleCourseRegistration(Registration registration, Skier skier, Course course, int ageSkieur) {
+     Registration handleCourseRegistration(Registration registration, Skier skier, Course course, int ageSkieur) {
         if (course.getTypeCourse() == null) {
             log.error("Course type is null");
             return null;
@@ -99,7 +99,7 @@ public class RegistrationServicesImpl implements IRegistrationServices {
         }
     }
 
-    private Registration handleChildrenCourseRegistration(Registration registration, Skier skier, Course course, int ageSkieur) {
+     Registration handleChildrenCourseRegistration(Registration registration, Skier skier, Course course, int ageSkieur) {
         if (ageSkieur < 16) {
             log.info("Ok CHILD !");
             if (registrationRepository.countByCourseAndNumWeek(course, registration.getNumWeek()) < 6) {
@@ -115,7 +115,7 @@ public class RegistrationServicesImpl implements IRegistrationServices {
         }
     }
 
-    private Registration handleAdultCourseRegistration(Registration registration, Skier skier, Course course, int ageSkieur) {
+     Registration handleAdultCourseRegistration(Registration registration, Skier skier, Course course, int ageSkieur) {
         if (ageSkieur >= 16) {
             log.info("Ok ADULT !");
             if (registrationRepository.countByCourseAndNumWeek(course, registration.getNumWeek()) < 6) {
