@@ -122,56 +122,14 @@ pipeline {
 
     post {
         success {
-            emailext (
-                subject: "SUCCESS: Job '${env.JOB_NAME} [${env.BUILD_NUMBER}]'",
-                body: """
-                    <p>BUILD STATUS: ${currentBuild.currentResult}</p>
-                    <p>BUILD URL: ${env.BUILD_URL}</p>
-                    <p>Job: ${env.JOB_NAME}</p>
-                    <p>Build Number: ${env.BUILD_NUMBER}</p>
-                    <p>Build Duration: ${currentBuild.durationString}</p>
-                """,
-                recipientProviders: [[$class: 'DevelopersRecipientProvider']],
-                to: "${EMAIL_RECIPIENTS}",
-                mimeType: 'text/html'
-            )
+            emailext subject: "Pipeline Success: ${APP_NAME}",
+                     body: "The Jenkins pipeline for ${APP_NAME} completed successfully.",
+                     to: "ahm.hssin@gmail.com"
         }
-        
-        // Send email on failed build
         failure {
-            emailext (
-                subject: "FAILURE: Job '${env.JOB_NAME} [${env.BUILD_NUMBER}]'",
-                body: """
-                    <p>BUILD STATUS: ${currentBuild.currentResult}</p>
-                    <p>BUILD URL: ${env.BUILD_URL}</p>
-                    <p>Job: ${env.JOB_NAME}</p>
-                    <p>Build Number: ${env.BUILD_NUMBER}</p>
-                    <p>Build Duration: ${currentBuild.durationString}</p>
-                    <p>Console Output:</p>
-                    <pre>${currentBuild.rawBuild.getLog(100).join('\n')}</pre>
-                """,
-                recipientProviders: [[$class: 'DevelopersRecipientProvider']],
-                to: "${EMAIL_RECIPIENTS_FAILURES}",
-                mimeType: 'text/html'
-            )
-        }
-        
-        // Send email when build status changes
-        changed {
-            emailext (
-                subject: "CHANGED: Job '${env.JOB_NAME} [${env.BUILD_NUMBER}]'",
-                body: """
-                    <p>BUILD STATUS: ${currentBuild.currentResult}</p>
-                    <p>PREVIOUS STATUS: ${currentBuild.previousBuild.result}</p>
-                    <p>BUILD URL: ${env.BUILD_URL}</p>
-                    <p>Job: ${env.JOB_NAME}</p>
-                    <p>Build Number: ${env.BUILD_NUMBER}</p>
-                    <p>Build Duration: ${currentBuild.durationString}</p>
-                """,
-                recipientProviders: [[$class: 'DevelopersRecipientProvider']],
-                to: "${EMAIL_RECIPIENTS}",
-                mimeType: 'text/html'
-            )
+            emailext subject: "Pipeline Failure: ${APP_NAME}",
+                     body: "The Jenkins pipeline for ${APP_NAME} failed. Please review the build logs for more details.",
+                     to: "ahm.hssin@gmail.com"
         }
         always {
             cleanWs()
