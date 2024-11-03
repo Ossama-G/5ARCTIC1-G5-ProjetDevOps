@@ -124,13 +124,13 @@ pipeline {
         failure {
             emailext subject: "Build Failed: ${JOB_NAME} ${BUILD_NUMBER}",
                     body: "Hi, Your build has failed. Please check your build at ${BUILD_URL}.",
-                    to: "ravindra@cloudgen.in",
+                    to: "ahm.hssin@gmail.com",
                     from: "ahm.hssin@gmail.com"
         }
         success {
             emailext subject: "Build Successful: ${JOB_NAME} ${BUILD_NUMBER}",
                     body: "Hi, Your build was successful. Please check your build for details at ${BUILD_URL}.",
-                    to: "ravindra@cloudgen.in",
+                    to: "ahm.hssin@gmail.com",
                     from: "ahm.hssin@gmail.com"
         }
         always {
