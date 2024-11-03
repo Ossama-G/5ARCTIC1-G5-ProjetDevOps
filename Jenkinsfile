@@ -5,7 +5,7 @@ pipeline {
     }
     environment {
         IMAGE_NAME = "gammoudioussama/skier-app"
-        IMAGE_TAG = "v1.0-dev"
+        IMAGE_TAG = "v1.0-dev-${env.BUILD_NUMBER}-${env.GIT_COMMIT.take(7)}"
     }
 
     stages {
