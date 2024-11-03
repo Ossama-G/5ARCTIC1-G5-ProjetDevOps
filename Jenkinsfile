@@ -13,6 +13,8 @@ pipeline {
         IMAGE_NAME = "${DOCKER_USER}/${APP_NAME}"
         IMAGE_TAG = "latest"
         JENKINS_API_TOKEN = credentials("JENKINS_API_TOKEN")
+        EMAIL_RECIPIENTS = 'ahm.hssin@gmail.com'
+        EMAIL_RECIPIENTS_FAILURES = 'ahm.hssin@gmail.com'
     }
 
     stages {
@@ -119,6 +121,58 @@ pipeline {
     }
 
     post {
+        success {
+            emailext (
+                subject: "SUCCESS: Job '${env.JOB_NAME} [${env.BUILD_NUMBER}]'",
+                body: """
+                    <p>BUILD STATUS: ${currentBuild.currentResult}</p>
+                    <p>BUILD URL: ${env.BUILD_URL}</p>
+                    <p>Job: ${env.JOB_NAME}</p>
+                    <p>Build Number: ${env.BUILD_NUMBER}</p>
+                    <p>Build Duration: ${currentBuild.durationString}</p>
+                """,
+                recipientProviders: [[$class: 'DevelopersRecipientProvider']],
+                to: "${EMAIL_RECIPIENTS}",
+                mimeType: 'text/html'
+            )
+        }
+        
+        // Send email on failed build
+        failure {
+            emailext (
+                subject: "FAILURE: Job '${env.JOB_NAME} [${env.BUILD_NUMBER}]'",
+                body: """
+                    <p>BUILD STATUS: ${currentBuild.currentResult}</p>
+                    <p>BUILD URL: ${env.BUILD_URL}</p>
+                    <p>Job: ${env.JOB_NAME}</p>
+                    <p>Build Number: ${env.BUILD_NUMBER}</p>
+                    <p>Build Duration: ${currentBuild.durationString}</p>
+                    <p>Console Output:</p>
+                    <pre>${currentBuild.rawBuild.getLog(100).join('\n')}</pre>
+                """,
+                recipientProviders: [[$class: 'DevelopersRecipientProvider']],
+                to: "${EMAIL_RECIPIENTS_FAILURES}",
+                mimeType: 'text/html'
+            )
+        }
+        
+        // Send email when build status changes
+        changed {
+            emailext (
+                subject: "CHANGED: Job '${env.JOB_NAME} [${env.BUILD_NUMBER}]'",
+                body: """
+                    <p>BUILD STATUS: ${currentBuild.currentResult}</p>
+                    <p>PREVIOUS STATUS: ${currentBuild.previousBuild.result}</p>
+                    <p>BUILD URL: ${env.BUILD_URL}</p>
+                    <p>Job: ${env.JOB_NAME}</p>
+                    <p>Build Number: ${env.BUILD_NUMBER}</p>
+                    <p>Build Duration: ${currentBuild.durationString}</p>
+                """,
+                recipientProviders: [[$class: 'DevelopersRecipientProvider']],
+                to: "${EMAIL_RECIPIENTS}",
+                mimeType: 'text/html'
+            )
+        }
         always {
             cleanWs()
         }
