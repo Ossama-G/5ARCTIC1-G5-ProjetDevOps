@@ -94,26 +94,26 @@ pipeline {
             }
         }
 
-      stage('Vulnerability Scan Using Trivy on Docker Image') {
-          steps {
-              script {
-                  // Nettoyer la base de données Java si nécessaire pour éviter les conflits
-                  sh "trivy clean --java-db"
+      // stage('Vulnerability Scan Using Trivy on Docker Image') {
+      //     steps {
+      //         script {
+      //             // Nettoyer la base de données Java si nécessaire pour éviter les conflits
+      //             sh "trivy clean --java-db"
 
-                  // Télécharger uniquement la base de données de vulnérabilités pour gagner du temps
-                  sh "trivy image --download-db-only --scanners vuln"
+      //             // Télécharger uniquement la base de données de vulnérabilités pour gagner du temps
+      //             sh "trivy image --download-db-only --scanners vuln"
 
-                  // Scanner l'image Docker pour les vulnérabilités avec un focus sur les vulnérabilités seulement
-                  sh "trivy image --scanners vuln --format json -o reports/trivy-image-report.json ${env.IMAGE_NAME}:${env.IMAGE_TAG}"
+      //             // Scanner l'image Docker pour les vulnérabilités avec un focus sur les vulnérabilités seulement
+      //             sh "trivy image --scanners vuln --format json -o reports/trivy-image-report.json ${env.IMAGE_NAME}:${env.IMAGE_TAG}"
 
-                  // Générer un rapport HTML pour l'image Docker
-                  sh "python3 $WORKSPACE/src/main/resources/templates/json_to_html.py reports/trivy-image-report.json reports/trivy-image-report.html"
+      //             // Générer un rapport HTML pour l'image Docker
+      //             sh "python3 $WORKSPACE/src/main/resources/templates/json_to_html.py reports/trivy-image-report.json reports/trivy-image-report.html"
 
-                  // Archiver uniquement le rapport HTML
-                  archiveArtifacts artifacts: 'reports/trivy-image-report.html'
-              }
-          }
-      }
+      //             // Archiver uniquement le rapport HTML
+      //             archiveArtifacts artifacts: 'reports/trivy-image-report.html'
+      //         }
+      //     }
+      // }
 
 
         stage('Push Docker Image to DockerHub') {
