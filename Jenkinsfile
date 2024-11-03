@@ -6,6 +6,11 @@ pipeline {
     environment {
         IMAGE_NAME = "gammoudioussama/skier-app"
         IMAGE_TAG = "v1.0-dev-${env.BUILD_NUMBER}-${env.GIT_COMMIT.take(7)}"
+
+        // Détails ACR
+        registryName = "oussamacontainerregistry01"
+        registryCredential = "acr-cred"
+        registryUrl = "oussamacontainerregistry01.azurecr.io"
     }
 
     stages {
@@ -139,6 +144,23 @@ pipeline {
                       // Pousser l'image vers Nexus
                       sh "docker tag ${env.IMAGE_NAME}:${env.IMAGE_TAG} localhost:8082/docker-images/${env.IMAGE_NAME}:${env.IMAGE_TAG}"
                       sh "docker push localhost:8082/docker-images/${env.IMAGE_NAME}:${env.IMAGE_TAG}"
+                  }
+              }
+          }
+      }
+
+      stage('Push Docker Image to ACR') {
+          steps {
+              script {
+                  withCredentials([usernamePassword(credentialsId: "${registryCredential}", usernameVariable: 'ACR_USERNAME', passwordVariable: 'ACR_PASSWORD')]) {
+                      // Connexion explicite à ACR
+                      sh "echo '$ACR_PASSWORD' | docker login ${registryUrl} -u $ACR_USERNAME --password-stdin"
+
+                      // Tag de l'image avec le nom de l'ACR
+                      sh "docker tag ${env.IMAGE_NAME}:${env.IMAGE_TAG} ${registryUrl}/${env.IMAGE_NAME}:${env.IMAGE_TAG}"
+
+                      // Push de l'image vers l'ACR
+                      sh "docker push ${registryUrl}/${env.IMAGE_NAME}:${env.IMAGE_TAG}"
                   }
               }
           }
