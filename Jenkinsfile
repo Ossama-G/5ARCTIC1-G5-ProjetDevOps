@@ -28,7 +28,7 @@ pipeline {
                 }
             }
         }
-        stage('Trivy Scan') {
+        stage('Trivy Scan on Source Code') {
             steps {
              script {
                  // Create the reports directory once at the beginning
