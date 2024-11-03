@@ -10,7 +10,7 @@ import tn.esprit.spring.entities.Support;
 import tn.esprit.spring.services.IRegistrationServices;
 
 import java.util.List;
-import java.util.stream.Collectors;
+
 
 @Tag(name = "\uD83D\uDDD3️Registration Management")
 @RestController
