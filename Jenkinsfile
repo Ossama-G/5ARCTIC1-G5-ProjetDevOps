@@ -121,15 +121,17 @@ pipeline {
     }
 
     post {
-        success {
-            emailext subject: "Pipeline Success: ${APP_NAME}",
-                     body: "The Jenkins pipeline for ${APP_NAME} completed successfully.",
-                     to: "ahmedhassine2017@gmail.com"
-        }
         failure {
-            emailext subject: "Pipeline Failure: ${APP_NAME}",
-                     body: "The Jenkins pipeline for ${APP_NAME} failed. Please review the build logs for more details.",
-                     to: "ahmedhassine2017@gmail.com"
+            emailext subject: "Build Failed: ${JOB_NAME} ${BUILD_NUMBER}",
+                    body: "Hi, Your build has failed. Please check your build at ${BUILD_URL}.",
+                    to: "ravindra@cloudgen.in",
+                    from: "ahm.hssin@gmail.com"
+        }
+        success {
+            emailext subject: "Build Successful: ${JOB_NAME} ${BUILD_NUMBER}",
+                    body: "Hi, Your build was successful. Please check your build for details at ${BUILD_URL}.",
+                    to: "ravindra@cloudgen.in",
+                    from: "ahm.hssin@gmail.com"
         }
         always {
             cleanWs()
