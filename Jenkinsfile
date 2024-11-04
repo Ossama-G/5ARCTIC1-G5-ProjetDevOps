@@ -45,11 +45,11 @@ pipeline {
                     // Créer le dossier pour les rapports une seule fois au début
                     sh 'mkdir -p reports'
 
-                    // Télécharger la base de données de vulnérabilités seulement si elle n'est pas présente
-                    sh '[ -f ~/.cache/trivy/db/trivy.db ] || trivy image --download-db-only'
+                    // Utiliser la base de données existante si elle est déjà téléchargée
+                    sh 'trivy fs --cache-dir ~/.cache/trivy --download-db-only || true'
 
-                    // Scanner uniquement les dossiers pertinents, en excluant certains si nécessaire
-                    sh 'trivy fs --format json -o reports/trivy-fs-report.json --ignore-unfixed --skip-dirs node_modules,venv .'
+                    // Scanner le système de fichiers, en excluant certains dossiers si nécessaire
+                    sh 'trivy fs --cache-dir ~/.cache/trivy --format json -o reports/trivy-fs-report.json --ignore-unfixed --skip-dirs node_modules,venv .'
 
                     // Générer un rapport HTML à partir du JSON
                     sh 'python3 $WORKSPACE/src/main/resources/templates/json_to_html.py reports/trivy-fs-report.json reports/trivy-fs-report.html'
