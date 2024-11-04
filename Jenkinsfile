@@ -56,14 +56,17 @@ pipeline {
         }
 
         stage('Quality Gate') {
-            steps {
-                script {
-                    waitForQualityGate abortPipeline: false, time: 10
+            timeout(time: 10, unit: 'MINUTES') {
+                steps {
+                    script {
+                        waitForQualityGate abortPipeline: true
+                    }
                 }
             }
         }
 
-         stage('Code Coverage Report') {
+
+        stage('Code Coverage Report') {
             steps {
                 sh 'mvn jacoco:report'
             }
