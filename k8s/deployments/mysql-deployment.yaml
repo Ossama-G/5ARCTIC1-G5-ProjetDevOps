@@ -20,12 +20,8 @@ spec:
           image: mysql:5.7
           ports:
             - containerPort: 3306
-          env:
-            - name: MYSQL_ROOT_PASSWORD
-              valueFrom:
-                secretKeyRef:
-                  name: mysql-secret
-                  key: password  # Spécifie la clé exacte du secret
+
+
           resources:
             requests:
               memory: "1Gi"   # Mémoire minimum pour MySQL

@@ -24,8 +24,8 @@ spec:
           envFrom:
             - configMapRef:
                 name: app-configmap
-            - secretRef:
-                name: mysql-secret
+
+
           resources:
             requests:
               memory: "512Mi"
