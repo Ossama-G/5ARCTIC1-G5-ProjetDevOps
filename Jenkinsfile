@@ -107,12 +107,13 @@ pipeline {
         stage('Deploy to AKS') {
             steps {
                 script {
-                    withCredentials([string(credentialsId: 'azure-session-token', variable: 'AZURE_TOKEN')]) {
-                        // Set the Azure token as an environment variable
-                        sh 'export AZURE_TOKEN=$AZURE_TOKEN'
-
-                        // Login to Azure using the token (assumes the token has necessary permissions)
-                        sh 'az login --identity --username ${AZURE_TOKEN}'
+                    withCredentials([
+                        string(credentialsId: 'azure-client-id', variable: 'AZURE_CLIENT_ID'),
+                        string(credentialsId: 'azure-client-secret', variable: 'AZURE_CLIENT_SECRET'),
+                        string(credentialsId: 'azure-tenant-id', variable: 'AZURE_TENANT_ID')
+                    ]) {
+                        // Login to Azure using the service principal
+                        sh 'az login --service-principal -u $AZURE_CLIENT_ID -p $AZURE_CLIENT_SECRET --tenant $AZURE_TENANT_ID'
 
                         // Get AKS credentials with the logged-in session
                         sh 'az aks get-credentials --resource-group myResourceGroup --name gestionstationaks'
@@ -157,6 +158,7 @@ pipeline {
                 }
             }
         }
+
 
         stage('Monitoring') {
             steps {
