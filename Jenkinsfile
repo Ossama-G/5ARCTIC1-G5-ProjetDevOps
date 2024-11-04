@@ -73,10 +73,10 @@ pipeline {
                 }
             }
         }
-        stage('Build Docker Image') {
+        stage('Build & Tag Docker Image') {
             steps {
                 script {
-                    dockerImage = docker.build("${env.DOCKERHUB_USERNAME}/${env.IMAGE_NAME}:${env.IMAGE_TAG}")
+                    sh "docker build -t ${env.IMAGE_NAME}:${env.IMAGE_TAG} ."
                 }
             }
         }
@@ -84,13 +84,8 @@ pipeline {
             steps {
                 script {
                     withCredentials([usernamePassword(credentialsId: "${registryCredential}", usernameVariable: 'ACR_USERNAME', passwordVariable: 'ACR_PASSWORD')]) {
-                        // Explicitly log in to ACR
                         sh "echo '$ACR_PASSWORD' | docker login ${registryUrl} -u $ACR_USERNAME --password-stdin"
-
-                        // Tag the image with the ACR name
                         sh "docker tag ${env.IMAGE_NAME}:${env.IMAGE_TAG} ${registryUrl}/${env.IMAGE_NAME}:${env.IMAGE_TAG}"
-
-                        // Push the image to ACR
                         sh "docker push ${registryUrl}/${env.IMAGE_NAME}:${env.IMAGE_TAG}"
                     }
                 }
@@ -98,71 +93,40 @@ pipeline {
         }
         stage('Prepare Deployment YAML') {
             steps {
-                // Replace IMAGE_TAG in app-deployment.yaml with the current image tag
                 sh "sed -i 's|\\${IMAGE_TAG}|${env.IMAGE_TAG}|g' k8s/deployments/app-deployment.yaml"
             }
         }
-        /* stage('Docker Compose Up') {
+        stage('Deploy to AKS') {
             steps {
                 script {
-                    dir('/home/ahmedbm') {
-                        sh 'docker-compose down --remove-orphans'
-                        sh 'docker-compose up -d'
+                    withCredentials([file(credentialsId: 'k8s-cred', variable: 'KUBECONFIG')]) {
+                        // Vérification de la connexion au cluster
+                        echo 'Vérification de la connexion au cluster AKS...'
+                        sh 'kubectl get nodes'
+
+                        // Déploiement des Secrets et ConfigMaps
+                        echo 'Déploiement des Secrets et ConfigMaps...'
+                        sh 'kubectl apply -f k8s/secrets/mysql-secret.yaml'
+                        sh 'kubectl apply -f k8s/configmaps/app-configmap.yaml'
+
+                        // Déploiement des Applications (MySQL et Spring Boot)
+                        echo 'Déploiement des applications MySQL et Spring Boot...'
+                        sh 'kubectl apply -f k8s/deployments/mysql-deployment.yaml'
+                        sh 'kubectl apply -f k8s/deployments/app-deployment.yaml'
+
+                        // Déploiement des Services
+                        echo 'Déploiement des services internes et externes...'
+                        sh 'kubectl apply -f k8s/services/mysql-service.yaml'
+                        sh 'kubectl apply -f k8s/services/springboot-app.yaml'
+                        sh 'kubectl apply -f k8s/services/springboot-service.yaml'  // LoadBalancer
+
+                        // Vérification de l'Adresse IP du LoadBalancer
+                        echo 'Attente pour l\'obtention de l\'adresse IP du LoadBalancer...'
+                        retry(5) {
+                            sleep 30
+                            sh 'kubectl get svc springboot-service -o jsonpath="{.status.loadBalancer.ingress[0].ip}"'
+                        }
                     }
-                }
-            }
-        } */
-       stage('Deploy to AKS') {
-           steps {
-               script {
-                   // Verify connection to the cluster
-                   sh 'kubectl get nodes'
-
-                   // Deploy Persistent Volumes and Claims
-                   echo 'Deploying Persistent Volumes and Claims...'
-                   sh 'kubectl apply -f k8s/volumes/mysql-pv.yaml'
-                   sh 'kubectl apply -f k8s/volumes/mysql-pvc.yaml'
-
-                   // Deploy Secrets and ConfigMaps
-                   echo 'Deploying Secrets and ConfigMaps...'
-                   sh 'kubectl apply -f k8s/secrets/mysql-secret.yaml'
-                   sh 'kubectl apply -f k8s/configmaps/app-configmap.yaml'
-
-                   // Deploy applications
-                   echo 'Deploying MySQL and Spring Boot applications...'
-                   sh 'kubectl apply -f k8s/deployments/mysql-deployment.yaml'
-                   sh 'kubectl apply -f k8s/deployments/app-deployment.yaml'
-
-                   // Deploy LoadBalancer service
-                   echo 'Deploying LoadBalancer service...'
-                   sh 'kubectl apply -f k8s/services/service.yaml'
-
-                   // Wait for LoadBalancer IP address
-                   echo 'Waiting for LoadBalancer IP address...'
-                   retry(5) {
-                       sleep 30  // Pause to allow LoadBalancer to initialize
-                       sh 'kubectl get svc springboot-service -o jsonpath="{.status.loadBalancer.ingress[0].ip}"'
-                   }
-               }
-           }
-       }
-        stage('Monitoring') {
-            steps {
-                script {
-                    sleep(time: 30, unit: 'SECONDS')
-                    def prometheusResponse = sh(script: "curl -L -s -o /dev/null -w '%{http_code}' http://localhost:9090", returnStdout: true).trim()
-                    echo "Prometheus response: ${prometheusResponse}"
-                    if (prometheusResponse != '200') {
-                        error "Prometheus check failed with status code ${prometheusResponse}"
-                    }
-                    def grafanaResponse = sh(script: "curl -L -s -o /dev/null -w '%{http_code}' http://localhost:3000", returnStdout: true).trim()
-                    echo "Grafana response: ${grafanaResponse}"
-                    if (grafanaResponse != '200') {
-                        error "Grafana check failed with status code ${grafanaResponse}"
-                    }
-                }
-                dir('/home/ahmedbm') {
-                    sh 'docker-compose logs --tail=100'
                 }
             }
         }
