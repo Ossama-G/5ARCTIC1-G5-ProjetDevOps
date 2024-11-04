@@ -13,7 +13,7 @@ import java.util.Set;
 
 @AllArgsConstructor
 @Service
-public class InstructorServicesImpl implements IInstructorServices{
+public class InstructorServicesImpl implements IInstructorServices {
 
     private IInstructorRepository instructorRepository;
     private ICourseRepository courseRepository;
@@ -41,11 +41,21 @@ public class InstructorServicesImpl implements IInstructorServices{
     @Override
     public Instructor addInstructorAndAssignToCourse(Instructor instructor, Long numCourse) {
         Course course = courseRepository.findById(numCourse).orElse(null);
-        Set<Course> courseSet = new HashSet<>();
+        if (course == null) {
+            // Si le cours n'existe pas, on ne fait rien et on retourne null
+            return null;
+        }
+
+        // Si le cours existe, on continue l'ajout à l'instructeur
+        Set<Course> courseSet = instructor.getCourses() != null ? instructor.getCourses() : new HashSet<>();
         courseSet.add(course);
         instructor.setCourses(courseSet);
+
+        // Mettre à jour l'instructeur du côté du cours pour maintenir la relation bidirectionnelle
+        course.setInstructor(instructor);
+
+        // Sauvegarder les deux entités
+        courseRepository.save(course);
         return instructorRepository.save(instructor);
     }
-
-
 }

@@ -28,23 +28,39 @@ pipeline {
                 }
             }
         }
-        stage('Trivy Scan') {
+        stage('Trivy Scan on Source Code') {
             steps {
                 script {
-                    // Download the vulnerability database
-                    sh 'trivy image --download-db-only'
-
-                    // Create the reports directory
+                    // Create the reports directory once at the beginning
                     sh 'mkdir -p reports'
 
-                    // Generate the JSON report
-                    sh 'trivy fs --format json -o reports/trivy-fs-report.json .'
+                    // Retry mechanism for downloading the vulnerability database and scanning
+                    def retries = 3
+                    def waitTime = 10 // seconds
 
-                    // Generate the HTML report using a Python script
-                    sh 'python3 $WORKSPACE/src/main/resources/templates/json_to_html.py reports/trivy-fs-report.json reports/trivy-fs-report.html'
+                    for (int i = 0; i < retries; i++) {
+                        try {
+                            // Download the vulnerability database only if it is not present
+                            sh '[ -f ~/.cache/trivy/db/trivy.db ] || trivy image --download-db-only'
 
-                    // Archive the HTML report
-                    archiveArtifacts artifacts: 'reports/trivy-fs-report.html', allowEmptyArchive: true
+                            // Scan only relevant directories, excluding some if necessary
+                            sh 'trivy fs --format json -o reports/trivy-fs-report.json --ignore-unfixed --skip-dirs node_modules,venv .'
+
+                            // Generate an HTML report from the JSON
+                            sh 'python3 $WORKSPACE/src/main/resources/templates/json_to_html.py reports/trivy-fs-report.json reports/trivy-fs-report.html'
+
+                            // Archive the JSON and HTML reports for better traceability
+                            archiveArtifacts artifacts: 'reports/trivy-fs-report.json, reports/trivy-fs-report.html', allowEmptyArchive: true
+                            break
+                        } catch (Exception e) {
+                            if (i < retries - 1) {
+                                echo "Retrying in ${waitTime} seconds..."
+                                sleep(waitTime)
+                            } else {
+                                error "Trivy scan failed after ${retries} attempts"
+                            }
+                        }
+                    }
                 }
             }
         }
@@ -120,12 +136,41 @@ pipeline {
             // Remove the docker-compose down command to keep the containers running
         }
         success {
-            emailext(
-                subject: "Jenkins Build Successful: ${env.JOB_NAME} #${env.BUILD_NUMBER}",
-                body: "Good news! The build was successful.\n\nJob: ${env.JOB_NAME}\nBuild Number: ${env.BUILD_NUMBER}\n\nCheck the details at: ${env.BUILD_URL}",
-                to: 'belhajmed.ahmed99@gmail.com',
-                from: 'abmahmed1099@gmail.com'
-            )
+            script {
+                def emoji = '✅'
+                def pipelineStatus = 'SUCCESS'
+                def gradientColor = 'linear-gradient(135deg, #b8e994, #28a745)'
+
+                def body = """
+                <html>
+                    <body style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; color: #333; padding: 0; margin: 0;">
+                        <div style="margin: 20px; padding: 20px; border-radius: 10px; background: ${gradientColor}; box-shadow: 0 4px 12px rgba(0,0,0,0.1); text-align: center;">
+                            <h1 style="color: white; margin: 0; font-size: 2em;">${emoji} ${env.JOB_NAME} - Build ${env.BUILD_NUMBER}</h1>
+                            <p style="color: white; margin: 10px 0; font-size: 1.2em; padding: 10px; border-radius: 5px; background-color: rgba(0,0,0,0.2); display: inline-block;">
+                                Pipeline Status: <strong>${pipelineStatus}</strong>
+                            </p>
+                            <p style="margin: 20px 0; font-size: 1.1em;">
+                                Check the <a href="${env.BUILD_URL}" style="color: #ffffff; text-decoration: underline; font-weight: bold;">console output</a>.
+                            </p>
+                        </div>
+                    </body>
+                </html>
+                """
+
+                try {
+                    emailext (
+                        subject: "${env.JOB_NAME} - Build ${env.BUILD_NUMBER} - ${pipelineStatus}",
+                        body: body,
+                        to: 'belhajmed.ahmed99@gmail.com',
+                        from: 'abmahmed1099@gmail.com',
+                        replyTo: 'abmahmed1099@gmail.com',
+                        mimeType: 'text/html',
+                        attachmentsPattern: 'reports/trivy-fs-report.html'
+                    )
+                } catch (Exception e) {
+                    echo "Error sending email: ${e.getMessage()}"
+                }
+            }
             publishHTML(target: [
                 reportName: 'Trivy Vulnerability Code Source Report',
                 reportDir: 'reports',
@@ -136,12 +181,44 @@ pipeline {
             ])
         }
         failure {
-            emailext(
-                subject: "Jenkins Build Failed: ${env.JOB_NAME} #${env.BUILD_NUMBER}",
-                body: "Unfortunately, the build failed.\n\nJob: ${env.JOB_NAME}\nBuild Number: ${env.BUILD_NUMBER}\n\nCheck the details at: ${env.BUILD_URL}",
-                to: 'belhajmed.ahmed99@gmail.com',
-                from: 'abmahmed1099@gmail.com'
-            )
+            script {
+                def emoji = '❌'
+                def pipelineStatus = 'FAILURE'
+                def gradientColor = 'linear-gradient(135deg, #e57373, #dc3545)'
+
+                def body = """
+                <html>
+                    <body style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; color: #333; padding: 0; margin: 0;">
+                        <div style="margin: 20px; padding: 20px; border-radius: 10px; background: ${gradientColor}; box-shadow: 0 4px 12px rgba(0,0,0,0.1); text-align: center;">
+                            <h1 style="color: white; margin: 0; font-size: 2em;">${emoji} ${env.JOB_NAME} - Build ${env.BUILD_NUMBER}</h1>
+                            <p style="color: white; margin: 10px 0; font-size: 1.2em; padding: 10px; border-radius: 5px; background-color: rgba(0,0,0,0.2); display: inline-block;">
+                                Pipeline Status: <strong>${pipelineStatus}</strong>
+                            </p>
+                            <p style="margin: 20px 0; font-size: 1.1em;">
+                                Check the <a href="${env.BUILD_URL}" style="color: #ffffff; text-decoration: underline; font-weight: bold;">console output</a>.
+                            </p>
+                        </div>
+                    </body>
+                </html>
+                """
+
+                try {
+                    emailext (
+                        subject: "${env.JOB_NAME} - Build ${env.BUILD_NUMBER} - ${pipelineStatus}",
+                        body: body,
+                        to: 'belhajmed.ahmed99@gmail.com',
+                        from: 'abmahmed1099@gmail.com',
+                        replyTo: 'abmahmed1099@gmail.com',
+                        mimeType: 'text/html',
+                        attachmentsPattern: 'reports/trivy-fs-report.html'
+                    )
+                } catch (Exception e) {
+                    echo "Error sending email: ${e.getMessage()}"
+                }
+            }
+        }
+        cleanup {
+            cleanWs()
         }
     }
 }
