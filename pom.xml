@@ -56,6 +56,10 @@
 		</dependency>
 	</dependencies>
 	<distributionManagement>
+		<snapshotRepository>
+			<id>snapshot-repo</id>
+			<url>http://192.168.33.10:8081/repository/maven-snapshots/</url>
+		</snapshotRepository>
         <repository>
             <id>deploymentRepo</id>
             <name>Nexus Repository</name>
