@@ -69,22 +69,31 @@ pipeline {
             }
         }
 
-        stage("Build & Push Docker Image") {
+        stage("Build Docker Image") {
             steps {
                 script {
-                    docker.withRegistry('',DOCKER_PASS) {
-                        docker_image = docker.build "${IMAGE_NAME}"
-                    }
+                    docker_image = docker.build "${IMAGE_NAME}"
+                }
+            }
+        }
 
-                    docker.withRegistry('',DOCKER_PASS) {
+        stage("Trivy Scan") {
+            steps {
+                script {
+                    sh "trivy image --exit-code 1 --severity HIGH,CRITICAL ${IMAGE_NAME}:${IMAGE_TAG}"
+                }
+            }
+        }
+
+        stage("Push Docker Image") {
+            steps {
+                script {
+                    docker.withRegistry('', DOCKER_PASS) {
                         docker_image.push("${IMAGE_TAG}")
                         docker_image.push('latest')
                     }
                 }
             }
-
-
-        
         }
         // stage("Deploy with Docker Compose") {
         //     steps {
