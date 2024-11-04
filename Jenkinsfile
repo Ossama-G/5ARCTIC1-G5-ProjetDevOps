@@ -79,55 +79,61 @@ pipeline {
             }
         }
 
-        stage('Build & Tag Docker Image') {
-            steps {
-                script {
-                    // Construire l'image Docker avec les tags IMAGE_TAG et latest
-                    sh "docker build -t ${registryUrl}/${env.IMAGE_NAME}:${env.IMAGE_TAG} -t ${registryUrl}/${env.IMAGE_NAME}:latest ."
-                }
-            }
-        }
+      stage('Build Docker Image') {
+                  steps {
+                      script {
+                          // Construire l'image Docker avec un tag local temporaire
+                          sh "docker build -t ${env.IMAGE_NAME}:${env.LOCAL_TAG} ."
+                      }
+                  }
+              }
 
-        stage('Push Docker Image to DockerHub') {
-            steps {
-                script {
-                    withCredentials([usernamePassword(credentialsId: 'docker-cred', usernameVariable: 'DOCKER_USERNAME', passwordVariable: 'DOCKER_PASSWORD')]) {
-                        // Authentification auprès de Docker Hub
-                        sh 'echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin'
-                        sh "docker push ${env.IMAGE_NAME}:${env.IMAGE_TAG}"
-                    }
-                }
-            }
-        }
+              stage('Tag for DockerHub and Push') {
+                  steps {
+                      script {
+                          withCredentials([usernamePassword(credentialsId: 'docker-cred', usernameVariable: 'DOCKER_USERNAME', passwordVariable: 'DOCKER_PASSWORD')]) {
+                              // Authentification auprès de Docker Hub
+                              sh 'echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin'
 
-        stage('Push Docker Image to Nexus') {
-            steps {
-                script {
-                    withCredentials([usernamePassword(credentialsId: 'nexus-cred', usernameVariable: 'NEXUS_USERNAME', passwordVariable: 'NEXUS_PASSWORD')]) {
-                        // Connexion explicite à Nexus
-                        sh 'echo "$NEXUS_PASSWORD" | docker login -u "$NEXUS_USERNAME" --password-stdin http://localhost:8082'
-                        // Pousser l'image vers Nexus
-                        sh "docker tag ${env.IMAGE_NAME}:${env.IMAGE_TAG} localhost:8082/docker-images/${env.IMAGE_NAME}:${env.IMAGE_TAG}"
-                        sh "docker push localhost:8082/docker-images/${env.IMAGE_NAME}:${env.IMAGE_TAG}"
-                    }
-                }
-            }
-        }
+                              // Taguer et pousser l'image vers DockerHub
+                              sh "docker tag ${env.IMAGE_NAME}:${env.LOCAL_TAG} ${env.IMAGE_NAME}:${env.IMAGE_TAG}"
+                              sh "docker push ${env.IMAGE_NAME}:${env.IMAGE_TAG}"
+                          }
+                      }
+                  }
+              }
 
-        stage('Push Docker Image to ACR') {
-            steps {
-                script {
-                    withCredentials([usernamePassword(credentialsId: "${registryCredential}", usernameVariable: 'ACR_USERNAME', passwordVariable: 'ACR_PASSWORD')]) {
-                        // Authentification auprès de ACR
-                        sh "echo '$ACR_PASSWORD' | docker login ${registryUrl} -u $ACR_USERNAME --password-stdin"
-                        // Push des tags de version et 'latest'
-                        sh "docker push ${registryUrl}/${env.IMAGE_NAME}:${env.IMAGE_TAG}"
-                        sh "docker push ${registryUrl}/${env.IMAGE_NAME}:latest"
-                    }
-                }
-            }
-        }
+              stage('Tag for Nexus and Push') {
+                  steps {
+                      script {
+                          withCredentials([usernamePassword(credentialsId: 'nexus-cred', usernameVariable: 'NEXUS_USERNAME', passwordVariable: 'NEXUS_PASSWORD')]) {
+                              // Connexion explicite à Nexus
+                              sh 'echo "$NEXUS_PASSWORD" | docker login -u "$NEXUS_USERNAME" --password-stdin http://localhost:8082'
 
+                              // Taguer et pousser l'image vers Nexus
+                              sh "docker tag ${env.IMAGE_NAME}:${env.LOCAL_TAG} localhost:8082/docker-images/${env.IMAGE_NAME}:${env.IMAGE_TAG}"
+                              sh "docker push localhost:8082/docker-images/${env.IMAGE_NAME}:${env.IMAGE_TAG}"
+                          }
+                      }
+                  }
+              }
+
+              stage('Tag for ACR and Push') {
+                  steps {
+                      script {
+                          withCredentials([usernamePassword(credentialsId: "${registryCredential}", usernameVariable: 'ACR_USERNAME', passwordVariable: 'ACR_PASSWORD')]) {
+                              // Authentification auprès de ACR
+                              sh "echo '$ACR_PASSWORD' | docker login ${registryUrl} -u $ACR_USERNAME --password-stdin"
+
+                              // Taguer et pousser l'image vers ACR avec les tags de version et latest
+                              sh "docker tag ${env.IMAGE_NAME}:${env.LOCAL_TAG} ${registryUrl}/${env.IMAGE_NAME}:${env.IMAGE_TAG}"
+                              sh "docker tag ${env.IMAGE_NAME}:${env.LOCAL_TAG} ${registryUrl}/${env.IMAGE_NAME}:latest"
+                              sh "docker push ${registryUrl}/${env.IMAGE_NAME}:${env.IMAGE_TAG}"
+                              sh "docker push ${registryUrl}/${env.IMAGE_NAME}:latest"
+                          }
+                      }
+                  }
+              }
         stage('Deploy to AKS') {
             steps {
                 script {
