@@ -107,7 +107,7 @@ pipeline {
         stage('Deploy to AKS') {
             steps {
                 script {
-                    withCredentials([string(credentialsId: 'azure-token', variable: 'AZURE_TOKEN')]) {
+                    withCredentials([string(credentialsId: 'azure-session-token', variable: 'AZURE_TOKEN')]) {
                         // Set the Azure token as an environment variable
                         sh 'export AZURE_TOKEN=$AZURE_TOKEN'
 
@@ -119,37 +119,37 @@ pipeline {
 
                         // Create Kubernetes deployment and service manifests
                         writeFile file: 'deployment.yaml', text: '''
-        apiVersion: apps/v1
-        kind: Deployment
-        metadata:
-          name: my-app
-        spec:
-          replicas: 3
-          selector:
-            matchLabels:
-              app: my-app
-          template:
-            metadata:
-              labels:
-                app: my-app
-            spec:
-              containers:
-              - name: my-app
-                image: gestionstationacr.azurecr.io/my-app:latest
-                ports:
-                - containerPort: 80
-        ---
-        apiVersion: v1
-        kind: Service
-        metadata:
-          name: my-app-service
-        spec:
-          type: LoadBalancer
-          ports:
-          - port: 80
-          selector:
-            app: my-app
-        '''
+                        apiVersion: apps/v1
+                        kind: Deployment
+                        metadata:
+                          name: my-app
+                        spec:
+                          replicas: 3
+                          selector:
+                            matchLabels:
+                              app: my-app
+                          template:
+                            metadata:
+                              labels:
+                                app: my-app
+                            spec:
+                              containers:
+                              - name: my-app
+                                image: gestionstationacr.azurecr.io/my-app:latest
+                                ports:
+                                - containerPort: 80
+                        ---
+                        apiVersion: v1
+                        kind: Service
+                        metadata:
+                          name: my-app-service
+                        spec:
+                          type: LoadBalancer
+                          ports:
+                          - port: 80
+                          selector:
+                            app: my-app
+                        '''
 
                         // Apply the Kubernetes manifests
                         sh 'kubectl apply -f deployment.yaml'
@@ -157,6 +157,7 @@ pipeline {
                 }
             }
         }
+
         stage('Monitoring') {
             steps {
                 script {
