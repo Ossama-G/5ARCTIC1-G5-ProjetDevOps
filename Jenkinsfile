@@ -8,7 +8,7 @@ pipeline {
         registryUrl = "gestionstationacr.azurecr.io"
         IMAGE_NAME = "gestion-station-ski"
         IMAGE_TAG = "v1.0-dev-${env.BUILD_NUMBER}-${env.GIT_COMMIT.take(7)}"
-        KUBECONFIG = "/var/lib/jenkins/.kube/config"
+
     }
 
     stages {
@@ -99,38 +99,35 @@ pipeline {
         stage('Deploy to AKS') {
             steps {
                 script {
-                    withCredentials([file(credentialsId: 'k8s-cred', variable: 'KUBECONFIG')]) {
-                        // Vérification de la connexion au cluster
-                        echo 'Vérification de la connexion au cluster AKS...'
-                        sh 'kubectl get nodes'
+                    // Verify connection to the cluster
+                    echo 'Verifying connection to the AKS cluster...'
+                    sh 'kubectl get nodes'
 
-                        // Déploiement des Secrets et ConfigMaps
-                        echo 'Déploiement des Secrets et ConfigMaps...'
-                        sh 'kubectl apply -f k8s/secrets/mysql-secret.yaml'
-                        sh 'kubectl apply -f k8s/configmaps/app-configmap.yaml'
+                    // Deploy Secrets and ConfigMaps
+                    echo 'Deploying Secrets and ConfigMaps...'
+                    sh 'kubectl apply -f k8s/secrets/mysql-secret.yaml'
+                    sh 'kubectl apply -f k8s/configmaps/app-configmap.yaml'
 
-                        // Déploiement des Applications (MySQL et Spring Boot)
-                        echo 'Déploiement des applications MySQL et Spring Boot...'
-                        sh 'kubectl apply -f k8s/deployments/mysql-deployment.yaml'
-                        sh 'kubectl apply -f k8s/deployments/app-deployment.yaml'
+                    // Deploy Applications (MySQL and Spring Boot)
+                    echo 'Deploying MySQL and Spring Boot applications...'
+                    sh 'kubectl apply -f k8s/deployments/mysql-deployment.yaml'
+                    sh 'kubectl apply -f k8s/deployments/app-deployment.yaml'
 
-                        // Déploiement des Services
-                        echo 'Déploiement des services internes et externes...'
-                        sh 'kubectl apply -f k8s/services/mysql-service.yaml'
-                        sh 'kubectl apply -f k8s/services/springboot-app.yaml'
-                        sh 'kubectl apply -f k8s/services/springboot-service.yaml'  // LoadBalancer
+                    // Deploy Services
+                    echo 'Deploying internal and external services...'
+                    sh 'kubectl apply -f k8s/services/mysql-service.yaml'
+                    sh 'kubectl apply -f k8s/services/springboot-app.yaml'
+                    sh 'kubectl apply -f k8s/services/springboot-service.yaml'  // LoadBalancer
 
-                        // Vérification de l'Adresse IP du LoadBalancer
-                        echo 'Attente pour l\'obtention de l\'adresse IP du LoadBalancer...'
-                        retry(5) {
-                            sleep 30
-                            sh 'kubectl get svc springboot-service -o jsonpath="{.status.loadBalancer.ingress[0].ip}"'
-                        }
+                    // Verify LoadBalancer IP Address
+                    echo 'Waiting for LoadBalancer IP address...'
+                    retry(5) {
+                        sleep 30
+                        sh 'kubectl get svc springboot-service -o jsonpath="{.status.loadBalancer.ingress[0].ip}"'
                     }
                 }
             }
         }
-    }
     post {
         always {
             junit '**/target/surefire-reports/*.xml'
