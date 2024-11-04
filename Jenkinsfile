@@ -3,9 +3,6 @@ pipeline {
 
     environment {
         DOCKERHUB_USERNAME = 'abm026'
-        registryName = "gestionstationacr"
-        registryCredential = "acr-cred"
-        registryUrl = "gestionstationacr.azurecr.io"
         IMAGE_NAME = "gestion-station-ski"
         IMAGE_TAG = "v1.0-dev-${env.BUILD_NUMBER}-${env.GIT_COMMIT.take(7)}"
     }
@@ -79,64 +76,33 @@ pipeline {
                 }
             }
         }
-        stage('Push Docker Image to ACR') {
+        stage('Push Docker Image to DockerHub') {
             steps {
                 script {
-                    withCredentials([usernamePassword(credentialsId: "${registryCredential}", usernameVariable: 'ACR_USERNAME', passwordVariable: 'ACR_PASSWORD')]) {
-                        sh "echo '$ACR_PASSWORD' | docker login ${registryUrl} -u $ACR_USERNAME --password-stdin"
-                        sh "docker tag ${env.IMAGE_NAME}:${env.IMAGE_TAG} ${registryUrl}/${env.IMAGE_NAME}:${env.IMAGE_TAG}"
-                        sh "docker push ${registryUrl}/${env.IMAGE_NAME}:${env.IMAGE_TAG}"
+                    withCredentials([usernamePassword(credentialsId: 'dockerhub-cred', usernameVariable: 'DOCKERHUB_USERNAME', passwordVariable: 'DOCKERHUB_PASSWORD')]) {
+                        sh "echo '$DOCKERHUB_PASSWORD' | docker login -u $DOCKERHUB_USERNAME --password-stdin"
+                        sh "docker tag ${env.IMAGE_NAME}:${env.IMAGE_TAG} ${DOCKERHUB_USERNAME}/${env.IMAGE_NAME}:${env.IMAGE_TAG}"
+                        sh "docker push ${DOCKERHUB_USERNAME}/${env.IMAGE_NAME}:${env.IMAGE_TAG}"
                     }
                 }
             }
         }
-        stage('Prepare Deployment YAML') {
+        stage('Deploy to Kubernetes') {
             steps {
-                sh "sed -i 's|\\${IMAGE_TAG}|${env.IMAGE_TAG}|g' k8s/deployments/app-deployment.yaml"
-            }
-        }
-        stage('Deploy to AKS') {
-                    steps {
-                        script {
-                            withCredentials([string(credentialsId: 'k8s-cred', variable: 'KUBECONFIG_CONTENT')]) {
-                                // Write the base64 content to a temporary file without interpolation
-                                writeFile file: 'kubeconfig.base64', text: KUBECONFIG_CONTENT
+                script {
+                    // Verify connection to the cluster
+                    echo 'Verifying connection to the Kubernetes cluster...'
+                    sh 'kubectl get nodes'
 
-                                // Decode the base64 content and write to kubeconfig
-                                sh 'base64 --decode kubeconfig.base64 > $WORKSPACE/kubeconfig'
-                                sh 'export KUBECONFIG=$WORKSPACE/kubeconfig'
-
-                                // Verify connection to the cluster
-                                echo 'Verifying connection to the AKS cluster...'
-                                sh 'kubectl get nodes'
-
-                                // Deploy Secrets and ConfigMaps
-                                echo 'Deploying Secrets and ConfigMaps...'
-                                sh 'kubectl apply -f k8s/secrets/mysql-secret.yaml'
-                                sh 'kubectl apply -f k8s/configmaps/app-configmap.yaml'
-
-                                // Deploy Applications (MySQL and Spring Boot)
-                                echo 'Deploying MySQL and Spring Boot applications...'
-                                sh 'kubectl apply -f k8s/deployments/mysql-deployment.yaml'
-                                sh 'kubectl apply -f k8s/deployments/app-deployment.yaml'
-
-                                // Deploy Services
-                                echo 'Deploying internal and external services...'
-                                sh 'kubectl apply -f k8s/services/mysql-service.yaml'
-                                sh 'kubectl apply -f k8s/services/springboot-app.yaml'
-                                sh 'kubectl apply -f k8s/services/springboot-service.yaml'  // LoadBalancer
-
-                                // Verify LoadBalancer IP Address
-                                echo 'Waiting for LoadBalancer IP address...'
-                                retry(5) {
-                                    sleep 30
-                                    sh 'kubectl get svc springboot-service -o jsonpath="{.status.loadBalancer.ingress[0].ip}"'
-                                }
-                            }
-                        }
-                    }
+                    // Deploy MySQL and Spring Boot applications
+                    echo 'Deploying MySQL and Spring Boot applications...'
+                    sh 'kubectl apply -f k8s/mysql-deployment.yaml'
+                    sh 'kubectl apply -f k8s/gestion-station-ski-deployment.yaml'
                 }
             }
+        }
+    }
+
     post {
         always {
             junit '**/target/surefire-reports/*.xml'
