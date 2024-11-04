@@ -17,7 +17,7 @@ spec:
       automountServiceAccountToken: false  # Désactive le montement automatique du service account
       containers:
         - name: springboot-app
-          image: "oussamacontainerregistry01.azurecr.io/gammoudioussama/skier-app:v1.0"  # URL de votre image ACR
+          image: "oussamacontainerregistry01.azurecr.io/gammoudioussama/skier-app:${IMAGE_TAG}"  # Utilise la variable IMAGE_TAG
           ports:
             - containerPort: 8089
           envFrom:

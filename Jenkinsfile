@@ -149,22 +149,31 @@ pipeline {
           }
       }
 
-      stage('Push Docker Image to ACR') {
-          steps {
-              script {
-                  withCredentials([usernamePassword(credentialsId: "${registryCredential}", usernameVariable: 'ACR_USERNAME', passwordVariable: 'ACR_PASSWORD')]) {
-                      // Connexion explicite à ACR
-                      sh "echo '$ACR_PASSWORD' | docker login ${registryUrl} -u $ACR_USERNAME --password-stdin"
 
-                      // Tag de l'image avec le nom de l'ACR
-                      sh "docker tag ${env.IMAGE_NAME}:${env.IMAGE_TAG} ${registryUrl}/${env.IMAGE_NAME}:${env.IMAGE_TAG}"
 
-                      // Push de l'image vers l'ACR
-                      sh "docker push ${registryUrl}/${env.IMAGE_NAME}:${env.IMAGE_TAG}"
-                  }
-              }
-          }
-      }
+        stage('Push Docker Image to ACR') {
+            steps {
+                script {
+                    withCredentials([usernamePassword(credentialsId: "${registryCredential}", usernameVariable: 'ACR_USERNAME', passwordVariable: 'ACR_PASSWORD')]) {
+                        // Connexion explicite à ACR
+                        sh "echo '$ACR_PASSWORD' | docker login ${registryUrl} -u $ACR_USERNAME --password-stdin"
+
+                        // Tag de l'image avec le nom de l'ACR
+                        sh "docker tag ${env.IMAGE_NAME}:${env.IMAGE_TAG} ${registryUrl}/${env.IMAGE_NAME}:${env.IMAGE_TAG}"
+
+                        // Push de l'image vers l'ACR
+                        sh "docker push ${registryUrl}/${env.IMAGE_NAME}:${env.IMAGE_TAG}"
+                    }
+                }
+            }
+        }
+
+        stage('Prepare Deployment YAML') {
+            steps {
+                // Remplace IMAGE_TAG dans app-deployment.yaml par le tag d'image actuel
+                sh "sed -i 's|\\${IMAGE_TAG}|${env.IMAGE_TAG}|g' k8s/deployments/app-deployment.yaml"
+            }
+        }
 
      stage('Deploy to AKS') {
          steps {
@@ -202,6 +211,7 @@ pipeline {
              }
          }
      }
+
     }
 
     post {
