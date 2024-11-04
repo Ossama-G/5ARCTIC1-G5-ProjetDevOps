@@ -56,8 +56,8 @@ pipeline {
         }
 
         stage('Quality Gate') {
-            timeout(time: 10, unit: 'MINUTES') {
-                steps {
+            steps {
+                timeout(time: 10, unit: 'MINUTES') { // Ajout du timeout ici
                     script {
                         waitForQualityGate abortPipeline: true
                     }
@@ -66,7 +66,7 @@ pipeline {
         }
 
 
-        stage('Code Coverage Report') {
+         stage('Code Coverage Report') {
             steps {
                 sh 'mvn jacoco:report'
             }
