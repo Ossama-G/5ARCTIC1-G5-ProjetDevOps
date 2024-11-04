@@ -242,4 +242,44 @@ pipeline {
             ])
         }
         failure {
+            script {
+                def emoji = '❌'
+                def pipelineStatus = 'FAILURE'
+                def gradientColor = 'linear-gradient(135deg, #e57373, #dc3545)'
 
+                def body = """
+                <html>
+                    <body style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; color: #333; padding: 0; margin: 0;">
+                        <div style="margin: 20px; padding: 20px; border-radius: 10px; background: ${gradientColor}; box-shadow: 0 4px 12px rgba(0,0,0,0.1); text-align: center;">
+                            <h1 style="color: white; margin: 0; font-size: 2em;">${emoji} ${env.JOB_NAME} - Build ${env.BUILD_NUMBER}</h1>
+                            <p style="color: white; margin: 10px 0; font-size: 1.2em; padding: 10px; border-radius: 5px; background-color: rgba(0,0,0,0.2); display: inline-block;">
+                                Pipeline Status: <strong>${pipelineStatus}</strong>
+                            </p>
+                            <p style="margin: 20px 0; font-size: 1.1em;">
+                                Check the <a href="${env.BUILD_URL}" style="color: #ffffff; text-decoration: underline; font-weight: bold;">console output</a>.
+                            </p>
+                        </div>
+                    </body>
+                </html>
+                """
+
+                try {
+                    emailext (
+                        subject: "${env.JOB_NAME} - Build ${env.BUILD_NUMBER} - ${pipelineStatus}",
+                        body: body,
+                        to: 'belhajmed.ahmed99@gmail.com',
+                        from: 'abmahmed1099@gmail.com',
+                        replyTo: 'abmahmed1099@gmail.com',
+                        mimeType: 'text/html',
+                        attachmentsPattern: 'reports/trivy-fs-report.html'
+                    )
+                } catch (Exception e) {
+                    echo "Error sending email: ${e.getMessage()}"
+                }
+            }
+        }
+        cleanup {
+            cleanWs()
+        }
+    }
+}
