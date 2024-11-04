@@ -1,0 +1,34 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: springboot-app
+  labels:
+    app: springboot-app
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: springboot-app
+  template:
+    metadata:
+      labels:
+        app: springboot-app
+    spec:
+      automountServiceAccountToken: false  # Désactive le montement automatique du service account
+      containers:
+        - name: springboot-app
+          image: "oussamacontainerregistry01.azurecr.io/gammoudioussama/skier-app:v1.0"  # URL de votre image ACR
+          ports:
+            - containerPort: 8089
+          envFrom:
+            - configMapRef:
+                name: app-configmap
+            - secretRef:
+                name: mysql-secret
+          resources:
+            requests:
+              memory: "512Mi"   # Mémoire minimum pour Spring Boot
+              cpu: "250m"       # CPU minimum pour Spring Boot
+            limits:
+              memory: "1Gi"     # Limite de mémoire maximale
+              cpu: "500m"       # Limite de CPU maximale
