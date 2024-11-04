@@ -108,8 +108,12 @@ pipeline {
         stage('Deploy to AKS') {
             steps {
                 script {
-                    // Retrieve Azure access token and store it in a JSON file
-                    sh 'az account get-access-token --resource https://management.azure.com --output json > azure_token.json'
+                    withCredentials([usernamePassword(credentialsId: 'azure-sp-credentials', usernameVariable: 'AZURE_CLIENT_ID', passwordVariable: 'AZURE_CLIENT_SECRET')]) {
+                        sh """
+                            az login --service-principal -u $AZURE_CLIENT_ID -p $AZURE_CLIENT_SECRET --tenant <your-tenant-id>
+                            az account get-access-token --resource https://management.azure.com --output json > azure_token.json
+                        """
+                    }
 
                     // Parse the access token from the JSON file
                     def azureToken = readJSON file: 'azure_token.json'
