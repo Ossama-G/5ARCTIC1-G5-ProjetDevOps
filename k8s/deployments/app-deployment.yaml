@@ -17,7 +17,8 @@ spec:
       automountServiceAccountToken: false
       containers:
         - name: springboot-app
-          image: "oussamacontainerregistry01.azurecr.io/gammoudioussama/skier-app:${IMAGE_TAG}"
+          image: "oussamacontainerregistry01.azurecr.io/gammoudioussama/skier-app:latest"
+          imagePullPolicy: Always
           ports:
             - containerPort: 8089
           envFrom:
