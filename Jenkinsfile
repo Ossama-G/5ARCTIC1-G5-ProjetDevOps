@@ -6,6 +6,9 @@ pipeline {
         registryName = "gestionstationacr"
         registryCredential = "acr-cred"
         registryUrl = "gestionstationacr.azurecr.io"
+        IMAGE_NAME = "gestion-station-ski"
+        IMAGE_TAG = "v1.0-dev-${env.BUILD_NUMBER}-${env.GIT_COMMIT.take(7)}"
+        KUBECONFIG = "/var/lib/jenkins/.kube/config"
     }
 
     stages {
@@ -47,7 +50,6 @@ pipeline {
                             break
                         } catch (Exception e) {
                             if (i < retries - 1) {
-                                echo "Retrying in ${waitTime} seconds..."
                                 sleep(waitTime)
                             } else {
                                 error "Trivy scan failed after ${retries} attempts"
@@ -74,17 +76,30 @@ pipeline {
         stage('Build Docker Image') {
             steps {
                 script {
-                    dockerImage = docker.build("${env.DOCKERHUB_USERNAME}/gestion-station-ski:latest")
+                    dockerImage = docker.build("${env.DOCKERHUB_USERNAME}/${env.IMAGE_NAME}:${env.IMAGE_TAG}")
                 }
             }
         }
         stage('Push Docker Image to ACR') {
             steps {
                 script {
-                    docker.withRegistry("https://${env.registryUrl}", "${env.registryCredential}") {
-                        dockerImage.push()
+                    withCredentials([usernamePassword(credentialsId: "${registryCredential}", usernameVariable: 'ACR_USERNAME', passwordVariable: 'ACR_PASSWORD')]) {
+                        // Explicitly log in to ACR
+                        sh "echo '$ACR_PASSWORD' | docker login ${registryUrl} -u $ACR_USERNAME --password-stdin"
+
+                        // Tag the image with the ACR name
+                        sh "docker tag ${env.IMAGE_NAME}:${env.IMAGE_TAG} ${registryUrl}/${env.IMAGE_NAME}:${env.IMAGE_TAG}"
+
+                        // Push the image to ACR
+                        sh "docker push ${registryUrl}/${env.IMAGE_NAME}:${env.IMAGE_TAG}"
                     }
                 }
+            }
+        }
+        stage('Prepare Deployment YAML') {
+            steps {
+                // Replace IMAGE_TAG in app-deployment.yaml with the current image tag
+                sh "sed -i 's|\\${IMAGE_TAG}|${env.IMAGE_TAG}|g' k8s/deployments/app-deployment.yaml"
             }
         }
         /* stage('Docker Compose Up') {
@@ -99,47 +114,38 @@ pipeline {
         } */
        stage('Deploy to AKS') {
            steps {
-               withCredentials([string(credentialsId: 'azure-session-token', variable: 'AZURE_TOKEN')]) {
-                   script {
-                       // Write the Azure session token to a file
-                       writeFile file: 'azureToken.json', text: "${AZURE_TOKEN}"
+               script {
+                   // Verify connection to the cluster
+                   sh 'kubectl get nodes'
 
-                       // Use the existing Azure CLI session and connect to the AKS cluster
-                       sh 'az aks get-credentials --resource-group myResourceGroup --name gestionstationaks --overwrite-existing'
+                   // Deploy Persistent Volumes and Claims
+                   echo 'Deploying Persistent Volumes and Claims...'
+                   sh 'kubectl apply -f k8s/volumes/mysql-pv.yaml'
+                   sh 'kubectl apply -f k8s/volumes/mysql-pvc.yaml'
 
-                       // Verify connection to the cluster
-                       sh 'kubectl get nodes'
+                   // Deploy Secrets and ConfigMaps
+                   echo 'Deploying Secrets and ConfigMaps...'
+                   sh 'kubectl apply -f k8s/secrets/mysql-secret.yaml'
+                   sh 'kubectl apply -f k8s/configmaps/app-configmap.yaml'
 
-                       // Deploy Persistent Volumes and Claims
-                       echo 'Deploying Persistent Volumes and Claims...'
-                       sh 'kubectl apply -f k8s/volumes/mysql-pv.yaml'
-                       sh 'kubectl apply -f k8s/volumes/mysql-pvc.yaml'
+                   // Deploy applications
+                   echo 'Deploying MySQL and Spring Boot applications...'
+                   sh 'kubectl apply -f k8s/deployments/mysql-deployment.yaml'
+                   sh 'kubectl apply -f k8s/deployments/app-deployment.yaml'
 
-                       // Deploy Secrets and ConfigMaps
-                       echo 'Deploying Secrets and ConfigMaps...'
-                       sh 'kubectl apply -f k8s/secrets/mysql-secret.yaml'
-                       sh 'kubectl apply -f k8s/configmaps/app-configmap.yaml'
+                   // Deploy LoadBalancer service
+                   echo 'Deploying LoadBalancer service...'
+                   sh 'kubectl apply -f k8s/services/service.yaml'
 
-                       // Deploy applications
-                       echo 'Deploying MySQL and Spring Boot applications...'
-                       sh 'kubectl apply -f k8s/deployments/mysql-deployment.yaml'
-                       sh 'kubectl apply -f k8s/deployments/app-deployment.yaml'
-
-                       // Deploy LoadBalancer service
-                       echo 'Deploying LoadBalancer service...'
-                       sh 'kubectl apply -f k8s/services/service.yaml'
-
-                       // Wait for LoadBalancer IP address
-                       echo 'Waiting for LoadBalancer IP address...'
-                       retry(5) {
-                           sleep 30  // Pause to allow LoadBalancer to initialize
-                           sh 'kubectl get svc springboot-service -o jsonpath="{.status.loadBalancer.ingress[0].ip}"'
-                       }
+                   // Wait for LoadBalancer IP address
+                   echo 'Waiting for LoadBalancer IP address...'
+                   retry(5) {
+                       sleep 30  // Pause to allow LoadBalancer to initialize
+                       sh 'kubectl get svc springboot-service -o jsonpath="{.status.loadBalancer.ingress[0].ip}"'
                    }
                }
            }
        }
-
         stage('Monitoring') {
             steps {
                 script {
