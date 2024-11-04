@@ -14,10 +14,10 @@ spec:
       labels:
         app: springboot-app
     spec:
-      automountServiceAccountToken: false  # Désactive le montement automatique du service account
+      automountServiceAccountToken: false
       containers:
         - name: springboot-app
-          image: "oussamacontainerregistry01.azurecr.io/gammoudioussama/skier-app:${IMAGE_TAG}"  # Utilise la variable IMAGE_TAG
+          image: "oussamacontainerregistry01.azurecr.io/gammoudioussama/skier-app:${IMAGE_TAG}"
           ports:
             - containerPort: 8089
           envFrom:
@@ -27,8 +27,8 @@ spec:
                 name: mysql-secret
           resources:
             requests:
-              memory: "512Mi"   # Mémoire minimum pour Spring Boot
-              cpu: "250m"       # CPU minimum pour Spring Boot
+              memory: "512Mi"
+              cpu: "250m"
             limits:
-              memory: "1Gi"     # Limite de mémoire maximale
-              cpu: "500m"       # Limite de CPU maximale
+              memory: "1Gi"
+              cpu: "500m"

@@ -25,7 +25,7 @@ spec:
               valueFrom:
                 secretKeyRef:
                   name: mysql-secret
-                  key: password
+                  key: password  # Spécifie la clé exacte du secret
           resources:
             requests:
               memory: "1Gi"   # Mémoire minimum pour MySQL
@@ -35,8 +35,7 @@ spec:
               cpu: "1000m"    # Limite de CPU maximale
           volumeMounts:
             - name: mysql-storage
-              mountPath: /var/lib/mysql
+              mountPath: /var/lib/mysql  # Répertoire où MySQL stocke ses données
       volumes:
         - name: mysql-storage
-          persistentVolumeClaim:
-            claimName: mysql-pvc
+          emptyDir: {}  # Utilisation de emptyDir au lieu de PV/PVC

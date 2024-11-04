@@ -34,7 +34,6 @@ pipeline {
 
         stage('Package') {
             steps {
-               // Crée le fichier JAR dans le dossier target/
                 sh 'mvn package -DskipTests'
             }
         }
@@ -42,19 +41,9 @@ pipeline {
         stage('Vulnerability Scan Using Trivy on Source Code') {
             steps {
                 script {
-                    // Créer le dossier pour les rapports une seule fois au début
                     sh 'mkdir -p reports'
-
-                    // Utiliser la base de données existante si elle est déjà téléchargée
-                    sh 'trivy fs --cache-dir ~/.cache/trivy --download-db-only || true'
-
-                    // Scanner le système de fichiers, en excluant certains dossiers si nécessaire
                     sh 'trivy fs --cache-dir ~/.cache/trivy --format json -o reports/trivy-fs-report.json --ignore-unfixed --skip-dirs node_modules,venv .'
-
-                    // Générer un rapport HTML à partir du JSON
                     sh 'python3 $WORKSPACE/src/main/resources/templates/json_to_html.py reports/trivy-fs-report.json reports/trivy-fs-report.html'
-
-                    // Archiver uniquement le rapport HTML
                     archiveArtifacts artifacts: 'reports/trivy-fs-report.html', allowEmptyArchive: true
                 }
             }
@@ -68,100 +57,20 @@ pipeline {
             }
         }
 
-        stage('Quality Gate') {
-            steps {
-                script {
-                    waitForQualityGate abortPipeline: false
-                }
-            }
-        }
-
-        stage('Code Coverage Report') {
-            steps {
-                sh 'mvn jacoco:report'
-            }
-        }
-
-        stage('Artifact Deployment to Nexus') {
-            steps {
-                withMaven(globalMavenSettingsConfig: 'global-settings', jdk: 'JAVA_HOME', maven: 'M2_HOME') {
-                    sh 'mvn deploy -X'
-                }
-            }
-        }
-
         stage('Build & Tag Docker Image') {
             steps {
                 script {
-                    // Construire l'image Docker avec le tag spécifié
                     sh "docker build -t ${env.IMAGE_NAME}:${env.IMAGE_TAG} ."
                 }
             }
         }
 
-      // stage('Vulnerability Scan Using Trivy on Docker Image') {
-      //     steps {
-      //         script {
-      //             // Nettoyer la base de données Java si nécessaire pour éviter les conflits
-      //             sh "trivy clean --java-db"
-
-      //             // Télécharger uniquement la base de données de vulnérabilités pour gagner du temps
-      //             sh "trivy image --download-db-only --scanners vuln"
-
-      //             // Scanner l'image Docker pour les vulnérabilités avec un focus sur les vulnérabilités seulement
-      //             sh "trivy image --scanners vuln --format json -o reports/trivy-image-report.json ${env.IMAGE_NAME}:${env.IMAGE_TAG}"
-
-      //             // Générer un rapport HTML pour l'image Docker
-      //             sh "python3 $WORKSPACE/src/main/resources/templates/json_to_html.py reports/trivy-image-report.json reports/trivy-image-report.html"
-
-      //             // Archiver uniquement le rapport HTML
-      //             archiveArtifacts artifacts: 'reports/trivy-image-report.html'
-      //         }
-      //     }
-      // }
-
-
-        stage('Push Docker Image to DockerHub') {
-            steps {
-                script {
-                    withCredentials([usernamePassword(credentialsId: 'docker-cred', usernameVariable: 'DOCKER_USERNAME', passwordVariable: 'DOCKER_PASSWORD')]) {
-                        // Authentification auprès de Docker Hub
-                        sh 'echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin'
-
-                        sh "docker push ${env.IMAGE_NAME}:${env.IMAGE_TAG}"
-                    }
-                }
-            }
-        }
-
-      stage('Push Docker Image to Nexus') {
-          steps {
-              script {
-                  withCredentials([usernamePassword(credentialsId: 'nexus-cred', usernameVariable: 'NEXUS_USERNAME', passwordVariable: 'NEXUS_PASSWORD')]) {
-                      // Connexion explicite à Nexus
-                      sh 'echo "$NEXUS_PASSWORD" | docker login -u "$NEXUS_USERNAME" --password-stdin http://localhost:8082'
-
-                      // Pousser l'image vers Nexus
-                      sh "docker tag ${env.IMAGE_NAME}:${env.IMAGE_TAG} localhost:8082/docker-images/${env.IMAGE_NAME}:${env.IMAGE_TAG}"
-                      sh "docker push localhost:8082/docker-images/${env.IMAGE_NAME}:${env.IMAGE_TAG}"
-                  }
-              }
-          }
-      }
-
-
-
         stage('Push Docker Image to ACR') {
             steps {
                 script {
                     withCredentials([usernamePassword(credentialsId: "${registryCredential}", usernameVariable: 'ACR_USERNAME', passwordVariable: 'ACR_PASSWORD')]) {
-                        // Connexion explicite à ACR
                         sh "echo '$ACR_PASSWORD' | docker login ${registryUrl} -u $ACR_USERNAME --password-stdin"
-
-                        // Tag de l'image avec le nom de l'ACR
                         sh "docker tag ${env.IMAGE_NAME}:${env.IMAGE_TAG} ${registryUrl}/${env.IMAGE_NAME}:${env.IMAGE_TAG}"
-
-                        // Push de l'image vers l'ACR
                         sh "docker push ${registryUrl}/${env.IMAGE_NAME}:${env.IMAGE_TAG}"
                     }
                 }
@@ -170,48 +79,44 @@ pipeline {
 
         stage('Prepare Deployment YAML') {
             steps {
-                // Remplace IMAGE_TAG dans app-deployment.yaml par le tag d'image actuel
                 sh "sed -i 's|\\${IMAGE_TAG}|${env.IMAGE_TAG}|g' k8s/deployments/app-deployment.yaml"
             }
         }
 
-     stage('Deploy to AKS') {
-         steps {
-             script {
-                 withCredentials([file(credentialsId: 'k8s-cred', variable: 'KUBECONFIG')]) {
-                     // Vérification de la connexion au cluster
-                     sh 'kubectl get nodes'
+        stage('Deploy to AKS') {
+            steps {
+                script {
+                    withCredentials([file(credentialsId: 'k8s-cred', variable: 'KUBECONFIG')]) {
+                        // Vérification de la connexion au cluster
+                        echo 'Vérification de la connexion au cluster AKS...'
+                        sh 'kubectl get nodes'
 
-                     // Déploiement des volumes
-                     echo 'Déploiement des Persistent Volumes et Claims...'
-                     sh 'kubectl apply -f k8s/volumes/mysql-pv.yaml'
-                     sh 'kubectl apply -f k8s/volumes/mysql-pvc.yaml'
+                        // Déploiement des Secrets et ConfigMaps
+                        echo 'Déploiement des Secrets et ConfigMaps...'
+                        sh 'kubectl apply -f k8s/secrets/mysql-secret.yaml'
+                        sh 'kubectl apply -f k8s/configmaps/app-configmap.yaml'
 
-                     // Déploiement des secrets et ConfigMaps
-                     echo 'Déploiement des Secrets et ConfigMaps...'
-                     sh 'kubectl apply -f k8s/secrets/mysql-secret.yaml'
-                     sh 'kubectl apply -f k8s/configmaps/app-configmap.yaml'
+                        // Déploiement des Applications (MySQL et Spring Boot)
+                        echo 'Déploiement des applications MySQL et Spring Boot...'
+                        sh 'kubectl apply -f k8s/deployments/mysql-deployment.yaml'
+                        sh 'kubectl apply -f k8s/deployments/app-deployment.yaml'
 
-                     // Déploiement des applications
-                     echo 'Déploiement des applications MySQL et Spring Boot...'
-                     sh 'kubectl apply -f k8s/deployments/mysql-deployment.yaml'
-                     sh 'kubectl apply -f k8s/deployments/app-deployment.yaml'
+                        // Déploiement des Services
+                        echo 'Déploiement des services internes et externes...'
+                        sh 'kubectl apply -f k8s/services/mysql-service.yaml'
+                        sh 'kubectl apply -f k8s/services/springboot-app.yaml'
+                        sh 'kubectl apply -f k8s/services/springboot-service.yaml'  // LoadBalancer
 
-                     // Déploiement du service LoadBalancer
-                     echo 'Déploiement du service LoadBalancer...'
-                     sh 'kubectl apply -f k8s/services/service.yaml'
-
-                     // Attente pour l'obtention de l'adresse IP du LoadBalancer
-                     echo 'Attente pour l\'obtention de l\'adresse IP du LoadBalancer...'
-                     retry(5) {
-                         sleep 30  // Pause pour laisser le LoadBalancer s'initialiser
-                         sh 'kubectl get svc springboot-service -o jsonpath="{.status.loadBalancer.ingress[0].ip}"'
-                     }
-                 }
-             }
-         }
-     }
-
+                        // Vérification de l'Adresse IP du LoadBalancer
+                        echo 'Attente pour l\'obtention de l\'adresse IP du LoadBalancer...'
+                        retry(5) {
+                            sleep 30
+                            sh 'kubectl get svc springboot-service -o jsonpath="{.status.loadBalancer.ingress[0].ip}"'
+                        }
+                    }
+                }
+            }
+        }
     }
 
     post {
@@ -244,7 +149,7 @@ pipeline {
                     from: 'ossama.gammoudii@gmail.com',
                     replyTo: 'ossama.gammoudii@gmail.com',
                     mimeType: 'text/html',
-                    attachmentsPattern: 'reports/trivy-fs-report.html, reports/trivy-image-report.html'
+                    attachmentsPattern: 'reports/trivy-fs-report.html'
                 )
             }
         }
@@ -278,7 +183,7 @@ pipeline {
                     from: 'ossama.gammoudii@gmail.com',
                     replyTo: 'ossama.gammoudii@gmail.com',
                     mimeType: 'text/html',
-                    attachmentsPattern: 'reports/trivy-fs-report.html, reports/trivy-image-report.html'
+                    attachmentsPattern: 'reports/trivy-fs-report.html'
                 )
             }
         }
