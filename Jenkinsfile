@@ -102,10 +102,8 @@ pipeline {
                 withCredentials([string(credentialsId: 'azure-session-token', variable: 'AZURE_TOKEN')]) {
                     script {
                         // Authenticate with Azure using the session token
-                        sh """
-                            az login --identity --access-token ${AZURE_TOKEN}
-                            az aks get-credentials --resource-group myResourceGroup --name gestionstationaks --overwrite-existing
-                        """
+                        sh(script: 'az login --identity --access-token $AZURE_TOKEN', env: [AZURE_TOKEN: "${AZURE_TOKEN}"])
+                        sh(script: 'az aks get-credentials --resource-group myResourceGroup --name gestionstationaks --overwrite-existing', env: [AZURE_TOKEN: "${AZURE_TOKEN}"])
 
                         // Verify connection to the cluster
                         sh 'kubectl get nodes'
