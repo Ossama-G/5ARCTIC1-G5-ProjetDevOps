@@ -21,4 +21,6 @@ public interface ISubscriptionServices {
 	List<Subscription> retrieveSubscriptionsByDates(LocalDate startDate, LocalDate endDate);
 
 	void retrieveSubscriptions();
+	void deleteSubscription(Long id);
+
 }

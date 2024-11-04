@@ -52,5 +52,10 @@ public class SubscriptionRestController {
                                                       @PathVariable("date2") LocalDate endDate){
         return subscriptionServices.retrieveSubscriptionsByDates(startDate, endDate);
     }
+    @Operation(description = "Delete Subscription by Id")
+    @DeleteMapping("/delete/{id-subscription}")
+    public void deleteSubscription(@PathVariable("id-subscription") Long numSubscription) {
+        subscriptionServices.deleteSubscription(numSubscription);
+    }
 
 }

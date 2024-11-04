@@ -74,7 +74,12 @@ public class SubscriptionServicesImpl implements ISubscriptionServices{
         }
     }
 
-   // @Scheduled(cron = "* 0 9 1 * *") /* Cron expression to run a job every month at 9am */
+    @Override
+    public void deleteSubscription(Long id) {
+        subscriptionRepository.deleteById(id);
+    }
+
+    // @Scheduled(cron = "* 0 9 1 * *") /* Cron expression to run a job every month at 9am */
     @Scheduled(cron = "*/30 * * * * *") /* Cron expression to run a job every 30 secondes */
     public void showMonthlyRecurringRevenue() {
         Float revenue = subscriptionRepository.recurringRevenueByTypeSubEquals(TypeSubscription.MONTHLY)
