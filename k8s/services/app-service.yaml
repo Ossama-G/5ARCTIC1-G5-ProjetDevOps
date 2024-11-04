@@ -4,7 +4,7 @@ metadata:
   name: springboot-app
 spec:
   selector:
-    app: springboot-app
+    app: my-app
   ports:
     - protocol: TCP
       port: 8089

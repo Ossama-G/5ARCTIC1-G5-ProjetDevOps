@@ -4,7 +4,7 @@ metadata:
   name: springboot-service
 spec:
   selector:
-    app: springboot-app
+    app: my-app
   ports:
     - protocol: TCP
       port: 80         # Port externe accessible via le LoadBalancer
