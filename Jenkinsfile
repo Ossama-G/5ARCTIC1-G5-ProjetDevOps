@@ -96,43 +96,47 @@ pipeline {
             }
         }
         stage('Deploy to AKS') {
-            steps {
-                script {
-                    withCredentials([string(credentialsId: 'k8s-cred', variable: 'KUBECONFIG_CONTENT')]) {
-                        sh 'echo $KUBECONFIG_CONTENT | base64 --decode > $WORKSPACE/kubeconfig'
-                        sh 'export KUBECONFIG=$WORKSPACE/kubeconfig'
+                    steps {
+                        script {
+                            withCredentials([string(credentialsId: 'k8s-cred', variable: 'KUBECONFIG_CONTENT')]) {
+                                // Write the base64 content to a temporary file
+                                writeFile file: 'kubeconfig.base64', text: "${KUBECONFIG_CONTENT}"
 
-                        // Verify connection to the cluster
-                        echo 'Verifying connection to the AKS cluster...'
-                        sh 'kubectl get nodes'
+                                // Decode the base64 content and write to kubeconfig
+                                sh 'base64 --decode kubeconfig.base64 > $WORKSPACE/kubeconfig'
+                                sh 'export KUBECONFIG=$WORKSPACE/kubeconfig'
 
-                        // Deploy Secrets and ConfigMaps
-                        echo 'Deploying Secrets and ConfigMaps...'
-                        sh 'kubectl apply -f k8s/secrets/mysql-secret.yaml'
-                        sh 'kubectl apply -f k8s/configmaps/app-configmap.yaml'
+                                // Verify connection to the cluster
+                                echo 'Verifying connection to the AKS cluster...'
+                                sh 'kubectl get nodes'
 
-                        // Deploy Applications (MySQL and Spring Boot)
-                        echo 'Deploying MySQL and Spring Boot applications...'
-                        sh 'kubectl apply -f k8s/deployments/mysql-deployment.yaml'
-                        sh 'kubectl apply -f k8s/deployments/app-deployment.yaml'
+                                // Deploy Secrets and ConfigMaps
+                                echo 'Deploying Secrets and ConfigMaps...'
+                                sh 'kubectl apply -f k8s/secrets/mysql-secret.yaml'
+                                sh 'kubectl apply -f k8s/configmaps/app-configmap.yaml'
 
-                        // Deploy Services
-                        echo 'Deploying internal and external services...'
-                        sh 'kubectl apply -f k8s/services/mysql-service.yaml'
-                        sh 'kubectl apply -f k8s/services/springboot-app.yaml'
-                        sh 'kubectl apply -f k8s/services/springboot-service.yaml'  // LoadBalancer
+                                // Deploy Applications (MySQL and Spring Boot)
+                                echo 'Deploying MySQL and Spring Boot applications...'
+                                sh 'kubectl apply -f k8s/deployments/mysql-deployment.yaml'
+                                sh 'kubectl apply -f k8s/deployments/app-deployment.yaml'
 
-                        // Verify LoadBalancer IP Address
-                        echo 'Waiting for LoadBalancer IP address...'
-                        retry(5) {
-                            sleep 30
-                            sh 'kubectl get svc springboot-service -o jsonpath="{.status.loadBalancer.ingress[0].ip}"'
+                                // Deploy Services
+                                echo 'Deploying internal and external services...'
+                                sh 'kubectl apply -f k8s/services/mysql-service.yaml'
+                                sh 'kubectl apply -f k8s/services/springboot-app.yaml'
+                                sh 'kubectl apply -f k8s/services/springboot-service.yaml'  // LoadBalancer
+
+                                // Verify LoadBalancer IP Address
+                                echo 'Waiting for LoadBalancer IP address...'
+                                retry(5) {
+                                    sleep 30
+                                    sh 'kubectl get svc springboot-service -o jsonpath="{.status.loadBalancer.ingress[0].ip}"'
+                                }
+                            }
                         }
                     }
                 }
             }
-        }
-    }
     post {
         always {
             junit '**/target/surefire-reports/*.xml'
