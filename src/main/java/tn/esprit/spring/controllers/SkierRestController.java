@@ -4,13 +4,11 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
-import tn.esprit.spring.dto.SkierDTO;
 import tn.esprit.spring.entities.Skier;
 import tn.esprit.spring.entities.TypeSubscription;
 import tn.esprit.spring.services.ISkierServices;
-
+import tn.esprit.spring.DTO.SkierDTO;
 import java.util.List;
-import java.util.stream.Collectors;
 
 @Tag(name = "\uD83C\uDFC2 Skier Management")
 @RestController
@@ -23,50 +21,38 @@ public class SkierRestController {
 
     @Operation(description = "Add Skier")
     @PostMapping("/add")
-    public SkierDTO addSkier(@RequestBody SkierDTO skierDTO){
-        Skier skier = convertToEntity(skierDTO);
-        Skier savedSkier = skierServices.addSkier(skier);
-        return convertToDTO(savedSkier);
+    public Skier addSkier(@RequestBody Skier skier){
+        return  skierServices.addSkier(skier);
     }
 
     @Operation(description = "Add Skier And Assign To Course")
     @PostMapping("/addAndAssign/{numCourse}")
-    public SkierDTO addSkierAndAssignToCourse(@RequestBody SkierDTO skierDTO,
-                                              @PathVariable("numCourse") Long numCourse){
-        Skier skier = convertToEntity(skierDTO);
-        Skier savedSkier = skierServices.addSkierAndAssignToCourse(skier, numCourse);
-        return convertToDTO(savedSkier);
+    public Skier addSkierAndAssignToCourse(@RequestBody Skier skier,
+                                           @PathVariable("numCourse") Long numCourse){
+        return  skierServices.addSkierAndAssignToCourse(skier,numCourse);
     }
-
     @Operation(description = "Assign Skier To Subscription")
     @PutMapping("/assignToSub/{numSkier}/{numSub}")
-    public SkierDTO assignToSubscription(@PathVariable("numSkier") Long numSkier,
-                                         @PathVariable("numSub") Long numSub){
-        Skier skier = skierServices.assignSkierToSubscription(numSkier, numSub);
-        return convertToDTO(skier);
+    public Skier assignToSubscription(@PathVariable("numSkier")Long numSkier,
+                               @PathVariable("numSub") Long numSub){
+        return skierServices.assignSkierToSubscription(numSkier, numSub);
     }
 
     @Operation(description = "Assign Skier To Piste")
     @PutMapping("/assignToPiste/{numSkier}/{numPiste}")
-    public SkierDTO assignToPiste(@PathVariable("numSkier") Long numSkier,
-                                  @PathVariable("numPiste") Long numPiste){
-        Skier skier = skierServices.assignSkierToPiste(numSkier, numPiste);
-        return convertToDTO(skier);
+    public Skier assignToPiste(@PathVariable("numSkier")Long numSkier,
+                               @PathVariable("numPiste") Long numPiste){
+        return skierServices.assignSkierToPiste(numSkier,numPiste);
     }
-
     @Operation(description = "retrieve Skiers By Subscription Type")
     @GetMapping("/getSkiersBySubscription")
-    public List<SkierDTO> retrieveSkiersBySubscriptionType(TypeSubscription typeSubscription) {
-        return skierServices.retrieveSkiersBySubscriptionType(typeSubscription).stream()
-                .map(this::convertToDTO)
-                .collect(Collectors.toList());
+    public List<Skier> retrieveSkiersBySubscriptionType(TypeSubscription typeSubscription) {
+        return skierServices.retrieveSkiersBySubscriptionType(typeSubscription);
     }
-
     @Operation(description = "Retrieve Skier by Id")
     @GetMapping("/get/{id-skier}")
-    public SkierDTO getById(@PathVariable("id-skier") Long numSkier){
-        Skier skier = skierServices.retrieveSkier(numSkier);
-        return convertToDTO(skier);
+    public Skier getById(@PathVariable("id-skier") Long numSkier){
+        return skierServices.retrieveSkier(numSkier);
     }
 
     @Operation(description = "Delete Skier by Id")
@@ -77,23 +63,9 @@ public class SkierRestController {
 
     @Operation(description = "Retrieve all Skiers")
     @GetMapping("/all")
-    public List<SkierDTO> getAllSkiers(){
-        return skierServices.retrieveAllSkiers().stream()
-                .map(this::convertToDTO)
-                .collect(Collectors.toList());
+    public List<Skier> getAllSkiers(){
+        return skierServices.retrieveAllSkiers();
     }
-
-    private SkierDTO convertToDTO(Skier skier) {
-        SkierDTO skierDTO = new SkierDTO();
-        skierDTO.setNumSkier(skier.getNumSkier());
-        skierDTO.setFirstName(skier.getFirstName());
-        skierDTO.setLastName(skier.getLastName());
-        skierDTO.setDateOfBirth(skier.getDateOfBirth());
-        skierDTO.setCity(skier.getCity());
-        skierDTO.setSubscriptionId(skier.getSubscription() != null ? skier.getSubscription().getNumSub() : null);
-        return skierDTO;
-    }
-
     public Skier convertToEntity(SkierDTO skierDTO) {
         Skier skier = new Skier();
         skier.setNumSkier(skierDTO.getNumSkier());
@@ -104,4 +76,6 @@ public class SkierRestController {
         // You may need to fetch the Subscription entity by ID if necessary
         return skier;
     }
+
+
 }

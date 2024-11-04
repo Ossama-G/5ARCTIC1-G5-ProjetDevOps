@@ -56,7 +56,7 @@ public class SubscriptionServicesImpl implements ISubscriptionServices{
 
     @Override
     public List<Subscription> getAll() {
-        return subscriptionRepository.findDistinctOrderByEndDateAsc();
+        return (List<Subscription>) subscriptionRepository.findAll();
     }
 
     @Override

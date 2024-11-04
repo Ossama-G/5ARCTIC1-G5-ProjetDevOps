@@ -2,6 +2,9 @@ package tn.esprit.spring.entities;
 
 import static org.junit.jupiter.api.Assertions.*;
 import org.junit.jupiter.api.Test;
+import tn.esprit.spring.entities.Course;
+import tn.esprit.spring.entities.Registration;
+import tn.esprit.spring.entities.Skier;
 
 class RegistrationTest {
 

@@ -2,6 +2,11 @@ package tn.esprit.spring.entities;
 
 import static org.junit.jupiter.api.Assertions.*;
 import org.junit.jupiter.api.Test;
+import tn.esprit.spring.entities.Piste;
+import tn.esprit.spring.entities.Registration;
+import tn.esprit.spring.entities.Skier;
+import tn.esprit.spring.entities.Subscription;
+
 import java.time.LocalDate;
 import java.util.HashSet;
 import java.util.Set;

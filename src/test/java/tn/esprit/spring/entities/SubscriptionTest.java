@@ -2,6 +2,9 @@ package tn.esprit.spring.entities;
 
 import static org.junit.jupiter.api.Assertions.*;
 import org.junit.jupiter.api.Test;
+import tn.esprit.spring.entities.Subscription;
+import tn.esprit.spring.entities.TypeSubscription;
+
 import java.time.LocalDate;
 
 class SubscriptionTest {

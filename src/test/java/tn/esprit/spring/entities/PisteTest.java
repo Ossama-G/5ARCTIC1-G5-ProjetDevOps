@@ -2,6 +2,10 @@ package tn.esprit.spring.entities;
 
 import static org.junit.jupiter.api.Assertions.*;
 import org.junit.jupiter.api.Test;
+import tn.esprit.spring.entities.Color;
+import tn.esprit.spring.entities.Piste;
+import tn.esprit.spring.entities.Skier;
+
 import java.util.HashSet;
 import java.util.Set;
 

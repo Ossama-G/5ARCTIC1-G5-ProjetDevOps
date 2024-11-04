@@ -1,4 +1,4 @@
-package tn.esprit.spring.dto;
+package tn.esprit.spring.DTO;
 
 import lombok.Data;
 import tn.esprit.spring.entities.Color;

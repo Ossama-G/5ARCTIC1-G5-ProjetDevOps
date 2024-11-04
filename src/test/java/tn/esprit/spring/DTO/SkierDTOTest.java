@@ -1,7 +1,10 @@
-package tn.esprit.spring.dto;
+package tn.esprit.spring.DTO;
 
 import static org.junit.jupiter.api.Assertions.*;
 import org.junit.jupiter.api.Test;
+
+
+
 import java.time.LocalDate;
 
 class SkierDTOTest {

@@ -1,7 +1,8 @@
-package tn.esprit.spring.dto;
+package tn.esprit.spring.DTO;
 
 import static org.junit.jupiter.api.Assertions.*;
 import org.junit.jupiter.api.Test;
+
 import tn.esprit.spring.entities.Course;
 import tn.esprit.spring.entities.Skier;
 
