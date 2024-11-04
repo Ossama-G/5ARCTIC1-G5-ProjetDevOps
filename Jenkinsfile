@@ -107,19 +107,23 @@ pipeline {
         stage('Deploy to AKS') {
             steps {
                 script {
-                    withCredentials([
-                        string(credentialsId: 'azure-client-id', variable: 'AZURE_CLIENT_ID'),
-                        string(credentialsId: 'azure-client-secret', variable: 'AZURE_CLIENT_SECRET'),
-                        string(credentialsId: 'azure-tenant-id', variable: 'AZURE_TENANT_ID')
-                    ]) {
-                        // Login to Azure using the service principal
-                        sh 'az login --service-principal -u $AZURE_CLIENT_ID -p $AZURE_CLIENT_SECRET --tenant $AZURE_TENANT_ID'
+                    // Retrieve Azure access token and store it in a JSON file
+                    sh 'az account get-access-token --resource https://management.azure.com --output json > azure_token.json'
 
-                        // Get AKS credentials with the logged-in session
-                        sh 'az aks get-credentials --resource-group myResourceGroup --name gestionstationaks'
+                    // Parse the access token from the JSON file
+                    def azureToken = readJSON file: 'azure_token.json'
 
-                        // Create Kubernetes deployment and service manifests
-                        writeFile file: 'deployment.yaml', text: '''
+                    // Set up kubectl with the access token for Azure AKS access
+                    sh """
+                        # Configure kubectl to use the token for authentication
+                        kubectl config set-credentials azure-user --token=${azureToken.accessToken}
+                        kubectl config set-context --current --user=azure-user
+
+                        # Get AKS credentials without 'az login' using the stored token
+                        az aks get-credentials --resource-group myResourceGroup --name gestionstationaks --overwrite-existing
+
+                        # Create Kubernetes deployment and service manifests
+                        cat <<EOF > deployment.yaml
                         apiVersion: apps/v1
                         kind: Deployment
                         metadata:
@@ -150,14 +154,15 @@ pipeline {
                           - port: 80
                           selector:
                             app: my-app
-                        '''
+                        EOF
 
-                        // Apply the Kubernetes manifests
-                        sh 'kubectl apply -f deployment.yaml'
-                    }
+                        # Apply the Kubernetes manifests using kubectl
+                        kubectl apply -f deployment.yaml
+                    """
                 }
             }
         }
+
 
 
         stage('Monitoring') {
