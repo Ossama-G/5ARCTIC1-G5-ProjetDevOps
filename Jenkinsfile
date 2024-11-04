@@ -8,7 +8,6 @@ pipeline {
         registryUrl = "gestionstationacr.azurecr.io"
         IMAGE_NAME = "gestion-station-ski"
         IMAGE_TAG = "v1.0-dev-${env.BUILD_NUMBER}-${env.GIT_COMMIT.take(7)}"
-
     }
 
     stages {
@@ -128,6 +127,7 @@ pipeline {
                 }
             }
         }
+    }
     post {
         always {
             junit '**/target/surefire-reports/*.xml'
