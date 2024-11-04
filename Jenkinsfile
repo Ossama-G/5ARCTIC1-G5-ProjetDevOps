@@ -87,59 +87,56 @@ pipeline {
                 }
             }
         }
-        /* stage('Docker Compose Up') {
+        stage('Deploy to AKS') {
             steps {
-                script {
-                    dir('/home/ahmedbm') {
-                        sh 'docker-compose down --remove-orphans'
-                        sh 'docker-compose up -d'
+                withCredentials([string(credentialsId: 'azure-session-token', variable: 'AZURE_TOKEN')]) {
+                    script {
+                        // Write the Azure session token to a file
+                        writeFile file: 'azureToken.json', text: "${AZURE_TOKEN}"
+
+                        // Authenticate with Azure using the token file
+                        sh 'az login --identity --use-device-code --output none --token-file azureToken.json'
+                        sh 'az aks get-credentials --resource-group myResourceGroup --name gestionstationaks --overwrite-existing'
+
+                        // Verify connection to the cluster
+                        sh 'kubectl get nodes'
+
+                        // Deploy Persistent Volumes and Claims
+                        echo 'Deploying Persistent Volumes and Claims...'
+                        sh 'kubectl apply -f k8s/volumes/mysql-pv.yaml'
+                        sh 'kubectl apply -f k8s/volumes/mysql-pvc.yaml'
+
+                        // Deploy Secrets and ConfigMaps
+                        echo 'Deploying Secrets and ConfigMaps...'
+                        sh 'kubectl apply -f k8s/secrets/mysql-secret.yaml'
+                        sh 'kubectl apply -f k8s/configmaps/app-configmap.yaml'
+
+                        // Deploy applications
+                        echo 'Deploying MySQL and Spring Boot applications...'
+                        sh 'kubectl apply -f k8s/deployments/mysql-deployment.yaml'
+                        sh 'kubectl apply -f k8s/deployments/app-deployment.yaml'
+
+                        // Deploy LoadBalancer service
+                        echo 'Deploying LoadBalancer service...'
+                        sh 'kubectl apply -f k8s/services/service.yaml'
+
+                        // Wait for LoadBalancer IP address
+                        echo 'Waiting for LoadBalancer IP address...'
+                        retry(5) {
+                            sleep 30  // Pause to allow LoadBalancer to initialize
+                            sh 'kubectl get svc springboot-service -o jsonpath="{.status.loadBalancer.ingress[0].ip}"'
+                        }
                     }
                 }
             }
-        } */
-       stage('Deploy to AKS') {
-           steps {
-               withCredentials([string(credentialsId: 'azure-session-token', variable: 'AZURE_TOKEN')]) {
-                   script {
-                       // Set the environment variable
-                       withEnv(["AZURE_TOKEN=${AZURE_TOKEN}"]) {
-                           // Authenticate with Azure using the session token
-                           sh 'az login --identity --access-token $AZURE_TOKEN'
-                           sh 'az aks get-credentials --resource-group myResourceGroup --name gestionstationaks --overwrite-existing'
-
-                           // Verify connection to the cluster
-                           sh 'kubectl get nodes'
-
-                           // Deploy Persistent Volumes and Claims
-                           echo 'Deploying Persistent Volumes and Claims...'
-                           sh 'kubectl apply -f k8s/volumes/mysql-pv.yaml'
-                           sh 'kubectl apply -f k8s/volumes/mysql-pvc.yaml'
-
-                           // Deploy Secrets and ConfigMaps
-                           echo 'Deploying Secrets and ConfigMaps...'
-                           sh 'kubectl apply -f k8s/secrets/mysql-secret.yaml'
-                           sh 'kubectl apply -f k8s/configmaps/app-configmap.yaml'
-
-                           // Deploy applications
-                           echo 'Deploying MySQL and Spring Boot applications...'
-                           sh 'kubectl apply -f k8s/deployments/mysql-deployment.yaml'
-                           sh 'kubectl apply -f k8s/deployments/app-deployment.yaml'
-
-                           // Deploy LoadBalancer service
-                           echo 'Deploying LoadBalancer service...'
-                           sh 'kubectl apply -f k8s/services/service.yaml'
-
-                           // Wait for LoadBalancer IP address
-                           echo 'Waiting for LoadBalancer IP address...'
-                           retry(5) {
-                               sleep 30  // Pause to allow LoadBalancer to initialize
-                               sh 'kubectl get svc springboot-service -o jsonpath="{.status.loadBalancer.ingress[0].ip}"'
-                           }
-                       }
-                   }
-               }
-           }
-       }
+        }
+        stage('Docker Compose Up') {
+            steps {
+                script {
+                    sh 'docker-compose up -d'
+                }
+            }
+        }
         stage('Monitoring') {
             steps {
                 script {
