@@ -108,9 +108,10 @@ pipeline {
         stage('Deploy to AKS') {
             steps {
                 script {
-                    withCredentials([usernamePassword(credentialsId: 'azure-sp-credentials', usernameVariable: 'AZURE_CLIENT_ID', passwordVariable: 'AZURE_CLIENT_SECRET')]) {
+                    // Log in to Azure using the session token
+                    withCredentials([string(credentialsId: 'azure-session-token', variable: 'AZURE_SESSION_TOKEN')]) {
                         sh """
-                            az login --service-principal -u $AZURE_CLIENT_ID -p $AZURE_CLIENT_SECRET --tenant <your-tenant-id>
+                            az login --identity
                             az account get-access-token --resource https://management.azure.com --output json > azure_token.json
                         """
                     }
@@ -127,46 +128,14 @@ pipeline {
                         # Get AKS credentials without 'az login' using the stored token
                         az aks get-credentials --resource-group myResourceGroup --name gestionstationaks --overwrite-existing
 
-                        # Create Kubernetes deployment and service manifests
-                        cat <<EOF > deployment.yaml
-                        apiVersion: apps/v1
-                        kind: Deployment
-                        metadata:
-                          name: my-app
-                        spec:
-                          replicas: 3
-                          selector:
-                            matchLabels:
-                              app: my-app
-                          template:
-                            metadata:
-                              labels:
-                                app: my-app
-                            spec:
-                              containers:
-                              - name: my-app
-                                image: gestionstationacr.azurecr.io/my-app:latest
-                                ports:
-                                - containerPort: 80
-                        ---
-                        apiVersion: v1
-                        kind: Service
-                        metadata:
-                          name: my-app-service
-                        spec:
-                          type: LoadBalancer
-                          ports:
-                          - port: 80
-                          selector:
-                            app: my-app
-                        EOF
-
-                        # Apply the Kubernetes manifests using kubectl
-                        kubectl apply -f deployment.yaml
+                        # Apply the Kubernetes manifests using kubectl from the k8s directory
+                        kubectl apply -f k8s/deployment.yaml
+                        kubectl apply -f k8s/service.yaml
                     """
                 }
             }
         }
+
 
         stage('Monitoring') {
             steps {
