@@ -78,6 +78,7 @@ pipeline {
                 }
             }
         }
+*/
 
       stage('Build Docker Image') {
                   steps {
@@ -88,7 +89,6 @@ pipeline {
                   }
               }
 
-*/
 
 /*
               stage('Tag for DockerHub and Push') {
