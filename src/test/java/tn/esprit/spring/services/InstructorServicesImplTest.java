@@ -5,6 +5,7 @@ import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
+import org.springframework.test.context.ActiveProfiles;
 import tn.esprit.spring.entities.Course;
 import tn.esprit.spring.entities.Instructor;
 import tn.esprit.spring.repositories.ICourseRepository;
@@ -16,6 +17,7 @@ import java.util.*;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
+@ActiveProfiles("local")
 class InstructorServicesImplTest {
 
     @Mock
