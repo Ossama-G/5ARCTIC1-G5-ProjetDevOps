@@ -21,10 +21,12 @@ spec:
           imagePullPolicy: Always
           ports:
             - containerPort: 8089
-          envFrom:
-            - configMapRef:
-                name: app-configmap
 
+          env :
+            - name: MYSQL_DB_USER  # Setting Database username
+              value: root
+            - name: MYSQL_PASSWORD # Setting Database password
+              value: root
 
           resources:
             requests:

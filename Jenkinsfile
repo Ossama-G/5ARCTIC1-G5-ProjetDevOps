@@ -37,7 +37,7 @@ pipeline {
                 sh 'mvn package -DskipTests'
             }
         }
-
+/*
         stage('Vulnerability Scan Using Trivy on Source Code') {
             steps {
                 script {
@@ -88,6 +88,9 @@ pipeline {
                   }
               }
 
+*/
+
+/*
               stage('Tag for DockerHub and Push') {
                   steps {
                       script {
@@ -117,7 +120,7 @@ pipeline {
                       }
                   }
               }
-
+*/
               stage('Tag for ACR and Push') {
                   steps {
                       script {

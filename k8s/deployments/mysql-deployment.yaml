@@ -20,6 +20,11 @@ spec:
           image: mysql:5.7
           ports:
             - containerPort: 3306
+          env:
+              - name: MYSQL_ROOT_PASSWORD
+                value: root
+              - name: MYSQL_DATABASE
+                value: stationSki
 
           resources:
             requests:
