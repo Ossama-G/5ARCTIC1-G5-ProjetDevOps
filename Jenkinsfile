@@ -108,13 +108,11 @@ pipeline {
         stage('Deploy to AKS') {
             steps {
                 script {
-                    // Log in to Azure using the session token
-                    withCredentials([string(credentialsId: 'azure-session-token', variable: 'AZURE_SESSION_TOKEN')]) {
-                        sh """
-                            az login --identity
-                            az account get-access-token --resource https://management.azure.com --output json > azure_token.json
-                        """
-                    }
+                    // Log in to Azure using the managed identity
+                    sh """
+                        az login --identity
+                        az account get-access-token --resource https://management.azure.com --output json > azure_token.json
+                    """
 
                     // Parse the access token from the JSON file
                     def azureToken = readJSON file: 'azure_token.json'
@@ -135,8 +133,6 @@ pipeline {
                 }
             }
         }
-
-
         stage('Monitoring') {
             steps {
                 script {
