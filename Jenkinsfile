@@ -166,6 +166,39 @@ pipeline {
           }
       }
 
+      stage('Deploy to AKS') {
+                  steps {
+                      script {
+                          withCredentials([file(credentialsId: 'k8s-cred', variable: 'KUBECONFIG')]) {
+                              // Vérification de la connexion au cluster
+                              sh 'kubectl get nodes'
+
+                              // Déploiement des volumes
+                              sh 'kubectl apply -f k8s/volumes/mysql-pv.yaml'
+                              sh 'kubectl apply -f k8s/volumes/mysql-pvc.yaml'
+
+                              // Déploiement des secrets et ConfigMaps
+                              sh 'kubectl apply -f k8s/secrets/mysql-secret.yaml'
+                              sh 'kubectl apply -f k8s/configmaps/app-configmap.yaml'
+
+                              // Déploiement des applications
+                              sh 'kubectl apply -f k8s/deployments/mysql-deployment.yaml'
+                              sh 'kubectl apply -f k8s/deployments/app-deployment.yaml'
+
+                              // Déploiement du service LoadBalancer
+                              sh 'kubectl apply -f k8s/services/service.yaml'
+
+                              // Attente pour l'obtention de l'adresse IP du LoadBalancer
+                              sh '''
+                              echo "Attente pour l'obtention de l'adresse IP du LoadBalancer..."
+                              sleep 30  # Pause pour laisser le LoadBalancer s'initialiser
+                              kubectl get svc springboot-service
+                              '''
+                          }
+                      }
+                  }
+              }
+          }
     }
 
     post {
