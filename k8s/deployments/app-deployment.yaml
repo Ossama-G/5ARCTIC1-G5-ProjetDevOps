@@ -12,13 +12,22 @@ spec:
       labels:
         app: my-app
     spec:
+      automountServiceAccountToken: false
       containers:
         - name: my-app
           image: gestionstationacr.azurecr.io/abm026/gestion-station-ski:latest
+          imagePullPolicy: Always
           ports:
             - containerPort: 80
           envFrom:
             - configMapRef:
                 name: app-configmap
-      imagePullSecrets:
-        - name: acr-credentials
+            - secretRef:
+                name: mysql-secret
+          resources:
+            requests:
+              memory: "512Mi"
+              cpu: "250m"
+            limits:
+              memory: "1Gi"
+              cpu: "500m"

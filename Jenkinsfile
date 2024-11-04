@@ -123,7 +123,7 @@ pipeline {
                                 // Deploy Services
                                 echo 'Deploying internal and external services...'
                                 sh 'kubectl apply -f k8s/services/mysql-service.yaml'
-                                sh 'kubectl apply -f k8s/services/springboot-app.yaml'
+                                sh 'kubectl apply -f k8s/services/app-service.yaml'
                                 sh 'kubectl apply -f k8s/services/springboot-service.yaml'  // LoadBalancer
 
                                 // Verify LoadBalancer IP Address
