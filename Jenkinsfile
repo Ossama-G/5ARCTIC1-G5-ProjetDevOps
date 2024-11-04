@@ -65,23 +65,20 @@ pipeline {
             }
         }
 
-        stage('Push Docker Image to ACR') {
-            steps {
-                script {
-                    withCredentials([usernamePassword(credentialsId: "${registryCredential}", usernameVariable: 'ACR_USERNAME', passwordVariable: 'ACR_PASSWORD')]) {
-                        sh "echo '$ACR_PASSWORD' | docker login ${registryUrl} -u $ACR_USERNAME --password-stdin"
-                        sh "docker tag ${env.IMAGE_NAME}:${env.IMAGE_TAG} ${registryUrl}/${env.IMAGE_NAME}:${env.IMAGE_TAG}"
-                        sh "docker push ${registryUrl}/${env.IMAGE_NAME}:${env.IMAGE_TAG}"
-                    }
-                }
-            }
-        }
+       stage('Push Docker Image to ACR') {
+           steps {
+               script {
+                   withCredentials([usernamePassword(credentialsId: "${registryCredential}", usernameVariable: 'ACR_USERNAME', passwordVariable: 'ACR_PASSWORD')]) {
+                       // Authentification auprès de ACR
+                       sh "echo '$ACR_PASSWORD' | docker login ${registryUrl} -u $ACR_USERNAME --password-stdin"
 
-        stage('Prepare Deployment YAML') {
-            steps {
-                sh "sed -i 's|\\${IMAGE_TAG}|${env.IMAGE_TAG}|g' k8s/deployments/app-deployment.yaml"
-            }
-        }
+                       // Push des tags de version et 'latest'
+                       sh "docker push ${registryUrl}/${env.IMAGE_NAME}:${env.IMAGE_TAG}"
+                       sh "docker push ${registryUrl}/${env.IMAGE_NAME}:latest"
+                   }
+               }
+           }
+       }
 
         stage('Deploy to AKS') {
             steps {
