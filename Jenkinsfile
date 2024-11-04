@@ -57,28 +57,76 @@ pipeline {
             }
         }
 
-        stage('Build & Tag Docker Image') {
+        stage('Quality Gate') {
             steps {
                 script {
-                    sh "docker build -t ${env.IMAGE_NAME}:${env.IMAGE_TAG} ."
+                  waitForQualityGate abortPipeline: false
                 }
             }
         }
 
-       stage('Push Docker Image to ACR') {
-           steps {
-               script {
-                   withCredentials([usernamePassword(credentialsId: "${registryCredential}", usernameVariable: 'ACR_USERNAME', passwordVariable: 'ACR_PASSWORD')]) {
-                       // Authentification auprès de ACR
-                       sh "echo '$ACR_PASSWORD' | docker login ${registryUrl} -u $ACR_USERNAME --password-stdin"
+        stage('Code Coverage Report') {
+            steps {
+                sh 'mvn jacoco:report'
+            }
+        }
 
-                       // Push des tags de version et 'latest'
-                       sh "docker push ${registryUrl}/${env.IMAGE_NAME}:${env.IMAGE_TAG}"
-                       sh "docker push ${registryUrl}/${env.IMAGE_NAME}:latest"
-                   }
-               }
-           }
-       }
+        stage('Artifact Deployment to Nexus') {
+            steps {
+                withMaven(globalMavenSettingsConfig: 'global-settings', jdk: 'JAVA_HOME', maven: 'M2_HOME') {
+                    sh 'mvn deploy -X'
+                }
+            }
+        }
+
+        stage('Build & Tag Docker Image') {
+            steps {
+                script {
+                    // Construire l'image Docker avec les tags IMAGE_TAG et latest
+                    sh "docker build -t ${registryUrl}/${env.IMAGE_NAME}:${env.IMAGE_TAG} -t ${registryUrl}/${env.IMAGE_NAME}:latest ."
+                }
+            }
+        }
+
+        stage('Push Docker Image to DockerHub') {
+            steps {
+                script {
+                    withCredentials([usernamePassword(credentialsId: 'docker-cred', usernameVariable: 'DOCKER_USERNAME', passwordVariable: 'DOCKER_PASSWORD')]) {
+                        // Authentification auprès de Docker Hub
+                        sh 'echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin'
+                        sh "docker push ${env.IMAGE_NAME}:${env.IMAGE_TAG}"
+                    }
+                }
+            }
+        }
+
+        stage('Push Docker Image to Nexus') {
+            steps {
+                script {
+                    withCredentials([usernamePassword(credentialsId: 'nexus-cred', usernameVariable: 'NEXUS_USERNAME', passwordVariable: 'NEXUS_PASSWORD')]) {
+                        // Connexion explicite à Nexus
+                        sh 'echo "$NEXUS_PASSWORD" | docker login -u "$NEXUS_USERNAME" --password-stdin http://localhost:8082'
+                        // Pousser l'image vers Nexus
+                        sh "docker tag ${env.IMAGE_NAME}:${env.IMAGE_TAG} localhost:8082/docker-images/${env.IMAGE_NAME}:${env.IMAGE_TAG}"
+                        sh "docker push localhost:8082/docker-images/${env.IMAGE_NAME}:${env.IMAGE_TAG}"
+                    }
+                }
+            }
+        }
+
+        stage('Push Docker Image to ACR') {
+            steps {
+                script {
+                    withCredentials([usernamePassword(credentialsId: "${registryCredential}", usernameVariable: 'ACR_USERNAME', passwordVariable: 'ACR_PASSWORD')]) {
+                        // Authentification auprès de ACR
+                        sh "echo '$ACR_PASSWORD' | docker login ${registryUrl} -u $ACR_USERNAME --password-stdin"
+                        // Push des tags de version et 'latest'
+                        sh "docker push ${registryUrl}/${env.IMAGE_NAME}:${env.IMAGE_TAG}"
+                        sh "docker push ${registryUrl}/${env.IMAGE_NAME}:latest"
+                    }
+                }
+            }
+        }
 
         stage('Deploy to AKS') {
             steps {
