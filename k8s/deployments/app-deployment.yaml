@@ -17,3 +17,6 @@ spec:
           image: gestionstationacr.azurecr.io/my-app:latest
           ports:
             - containerPort: 80
+          envFrom:
+            - configMapRef:
+                name: app-configmap

@@ -3,6 +3,9 @@ pipeline {
 
     environment {
         DOCKERHUB_USERNAME = 'abm026'
+        registryName = "gestionstationacr"
+        registryCredential = "acr-cred"
+        registryUrl = "gestionstationacr.azurecr.io"
     }
 
     stages {
@@ -31,25 +34,15 @@ pipeline {
         stage('Trivy Scan on Source Code') {
             steps {
                 script {
-                    // Create the reports directory once at the beginning
                     sh 'mkdir -p reports'
-
-                    // Retry mechanism for downloading the vulnerability database and scanning
                     def retries = 3
                     def waitTime = 10 // seconds
 
                     for (int i = 0; i < retries; i++) {
                         try {
-                            // Download the vulnerability database only if it is not present
                             sh '[ -f ~/.cache/trivy/db/trivy.db ] || trivy image --download-db-only'
-
-                            // Scan only relevant directories, excluding some if necessary
                             sh 'trivy fs --format json -o reports/trivy-fs-report.json --ignore-unfixed --skip-dirs node_modules,venv .'
-
-                            // Generate an HTML report from the JSON
                             sh 'python3 $WORKSPACE/src/main/resources/templates/json_to_html.py reports/trivy-fs-report.json reports/trivy-fs-report.html'
-
-                            // Archive the JSON and HTML reports for better traceability
                             archiveArtifacts artifacts: 'reports/trivy-fs-report.json, reports/trivy-fs-report.html', allowEmptyArchive: true
                             break
                         } catch (Exception e) {
@@ -85,10 +78,10 @@ pipeline {
                 }
             }
         }
-        stage('Push Docker Image') {
+        stage('Push Docker Image to ACR') {
             steps {
                 script {
-                    docker.withRegistry('https://index.docker.io/v1/', 'dockerhub-credentials') {
+                    docker.withRegistry("https://${env.registryUrl}", "${env.registryCredential}") {
                         dockerImage.push()
                     }
                 }
@@ -97,7 +90,6 @@ pipeline {
         stage('Docker Compose Up') {
             steps {
                 script {
-                    // Bring up the services defined in docker-compose.yml
                     dir('/home/ahmedbm') {
                         sh 'docker-compose down --remove-orphans'
                         sh 'docker-compose up -d'
@@ -108,25 +100,15 @@ pipeline {
         stage('Deploy to AKS') {
             steps {
                 script {
-                    // Log in to Azure using the managed identity
                     sh """
                         az login --identity
                         az account get-access-token --resource https://management.azure.com --output json > azure_token.json
                     """
-
-                    // Parse the access token from the JSON file
                     def azureToken = readJSON file: 'azure_token.json'
-
-                    // Set up kubectl with the access token for Azure AKS access
                     sh """
-                        # Configure kubectl to use the token for authentication
                         kubectl config set-credentials azure-user --token=${azureToken.accessToken}
                         kubectl config set-context --current --user=azure-user
-
-                        # Get AKS credentials without 'az login' using the stored token
                         az aks get-credentials --resource-group myResourceGroup --name gestionstationaks --overwrite-existing
-
-                        # Apply the Kubernetes manifests using kubectl from the k8s directory
                         kubectl apply -f k8s/deployment.yaml
                         kubectl apply -f k8s/service.yaml
                     """
@@ -136,17 +118,12 @@ pipeline {
         stage('Monitoring') {
             steps {
                 script {
-                    // Add a delay to allow the application to start
                     sleep(time: 30, unit: 'SECONDS')
-
-                    // Check if Prometheus is running and follow redirects
                     def prometheusResponse = sh(script: "curl -L -s -o /dev/null -w '%{http_code}' http://localhost:9090", returnStdout: true).trim()
                     echo "Prometheus response: ${prometheusResponse}"
                     if (prometheusResponse != '200') {
                         error "Prometheus check failed with status code ${prometheusResponse}"
                     }
-
-                    // Check if Grafana is running and follow redirects
                     def grafanaResponse = sh(script: "curl -L -s -o /dev/null -w '%{http_code}' http://localhost:3000", returnStdout: true).trim()
                     echo "Grafana response: ${grafanaResponse}"
                     if (grafanaResponse != '200') {
@@ -154,7 +131,6 @@ pipeline {
                     }
                 }
                 dir('/home/ahmedbm') {
-                    // Fetch the last 100 lines of logs for monitoring
                     sh 'docker-compose logs --tail=100'
                 }
             }
