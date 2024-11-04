@@ -107,45 +107,53 @@ pipeline {
         stage('Deploy to AKS') {
             steps {
                 script {
-                    // Get AKS credentials
-                    sh 'az aks get-credentials --resource-group myResourceGroup --name gestionstationaks'
+                    withCredentials([string(credentialsId: 'azure-token', variable: 'AZURE_TOKEN')]) {
+                        // Set the Azure token as an environment variable
+                        sh 'export AZURE_TOKEN=$AZURE_TOKEN'
 
-                    // Create Kubernetes deployment and service manifests
-                    writeFile file: 'deployment.yaml', text: '''
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: my-app
-spec:
-  replicas: 3
-  selector:
-    matchLabels:
-      app: my-app
-  template:
-    metadata:
-      labels:
-        app: my-app
-    spec:
-      containers:
-      - name: my-app
-        image: gestionstationacr.azurecr.io/my-app:latest
-        ports:
-        - containerPort: 80
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: my-app-service
-spec:
-  type: LoadBalancer
-  ports:
-  - port: 80
-  selector:
-    app: my-app
-'''
+                        // Login to Azure using the token (assumes the token has necessary permissions)
+                        sh 'az login --identity --username ${AZURE_TOKEN}'
 
-                    // Apply the Kubernetes manifests
-                    sh 'kubectl apply -f deployment.yaml'
+                        // Get AKS credentials with the logged-in session
+                        sh 'az aks get-credentials --resource-group myResourceGroup --name gestionstationaks'
+
+                        // Create Kubernetes deployment and service manifests
+                        writeFile file: 'deployment.yaml', text: '''
+        apiVersion: apps/v1
+        kind: Deployment
+        metadata:
+          name: my-app
+        spec:
+          replicas: 3
+          selector:
+            matchLabels:
+              app: my-app
+          template:
+            metadata:
+              labels:
+                app: my-app
+            spec:
+              containers:
+              - name: my-app
+                image: gestionstationacr.azurecr.io/my-app:latest
+                ports:
+                - containerPort: 80
+        ---
+        apiVersion: v1
+        kind: Service
+        metadata:
+          name: my-app-service
+        spec:
+          type: LoadBalancer
+          ports:
+          - port: 80
+          selector:
+            app: my-app
+        '''
+
+                        // Apply the Kubernetes manifests
+                        sh 'kubectl apply -f deployment.yaml'
+                    }
                 }
             }
         }
