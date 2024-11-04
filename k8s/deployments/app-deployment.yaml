@@ -14,9 +14,11 @@ spec:
     spec:
       containers:
         - name: my-app
-          image: gestionstationacr.azurecr.io/my-app:latest
+          image: gestionstationacr.azurecr.io/abm026/gestion-station-ski:latest
           ports:
             - containerPort: 80
           envFrom:
             - configMapRef:
                 name: app-configmap
+      imagePullSecrets:
+        - name: acr-credentials

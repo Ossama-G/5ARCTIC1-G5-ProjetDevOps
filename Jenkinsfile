@@ -87,7 +87,7 @@ pipeline {
                 }
             }
         }
-        stage('Docker Compose Up') {
+        /* stage('Docker Compose Up') {
             steps {
                 script {
                     dir('/home/ahmedbm') {
@@ -96,18 +96,12 @@ pipeline {
                     }
                 }
             }
-        }
+        } */
         stage('Deploy to AKS') {
             steps {
                 script {
                     sh """
                         az login --identity
-                        az account get-access-token --resource https://management.azure.com --output json > azure_token.json
-                    """
-                    def azureToken = readJSON file: 'azure_token.json'
-                    sh """
-                        kubectl config set-credentials azure-user --token=${azureToken.accessToken}
-                        kubectl config set-context --current --user=azure-user
                         az aks get-credentials --resource-group myResourceGroup --name gestionstationaks --overwrite-existing
                         kubectl apply -f k8s/deployment.yaml
                         kubectl apply -f k8s/service.yaml
