@@ -99,8 +99,8 @@ pipeline {
                     steps {
                         script {
                             withCredentials([string(credentialsId: 'k8s-cred', variable: 'KUBECONFIG_CONTENT')]) {
-                                // Write the base64 content to a temporary file
-                                writeFile file: 'kubeconfig.base64', text: "${KUBECONFIG_CONTENT}"
+                                // Write the base64 content to a temporary file without interpolation
+                                writeFile file: 'kubeconfig.base64', text: KUBECONFIG_CONTENT
 
                                 // Decode the base64 content and write to kubeconfig
                                 sh 'base64 --decode kubeconfig.base64 > $WORKSPACE/kubeconfig'
@@ -123,7 +123,7 @@ pipeline {
                                 // Deploy Services
                                 echo 'Deploying internal and external services...'
                                 sh 'kubectl apply -f k8s/services/mysql-service.yaml'
-                                sh 'kubectl apply -f k8s/services/app-service.yaml'
+                                sh 'kubectl apply -f k8s/services/springboot-app.yaml'
                                 sh 'kubectl apply -f k8s/services/springboot-service.yaml'  // LoadBalancer
 
                                 // Verify LoadBalancer IP Address
