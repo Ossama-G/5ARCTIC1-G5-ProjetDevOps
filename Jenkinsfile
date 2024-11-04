@@ -97,46 +97,49 @@ pipeline {
                 }
             }
         } */
-        stage('Deploy to AKS') {
-            steps {
-                withCredentials([string(credentialsId: 'azure-session-token', variable: 'AZURE_TOKEN')]) {
-                    script {
-                        // Authenticate with Azure using the session token
-                        sh(script: 'az login --identity --access-token $AZURE_TOKEN', env: [AZURE_TOKEN: "${AZURE_TOKEN}"])
-                        sh(script: 'az aks get-credentials --resource-group myResourceGroup --name gestionstationaks --overwrite-existing', env: [AZURE_TOKEN: "${AZURE_TOKEN}"])
+       stage('Deploy to AKS') {
+           steps {
+               withCredentials([string(credentialsId: 'azure-session-token', variable: 'AZURE_TOKEN')]) {
+                   script {
+                       // Set the environment variable
+                       withEnv(["AZURE_TOKEN=${AZURE_TOKEN}"]) {
+                           // Authenticate with Azure using the session token
+                           sh 'az login --identity --access-token $AZURE_TOKEN'
+                           sh 'az aks get-credentials --resource-group myResourceGroup --name gestionstationaks --overwrite-existing'
 
-                        // Verify connection to the cluster
-                        sh 'kubectl get nodes'
+                           // Verify connection to the cluster
+                           sh 'kubectl get nodes'
 
-                        // Deploy Persistent Volumes and Claims
-                        echo 'Deploying Persistent Volumes and Claims...'
-                        sh 'kubectl apply -f k8s/volumes/mysql-pv.yaml'
-                        sh 'kubectl apply -f k8s/volumes/mysql-pvc.yaml'
+                           // Deploy Persistent Volumes and Claims
+                           echo 'Deploying Persistent Volumes and Claims...'
+                           sh 'kubectl apply -f k8s/volumes/mysql-pv.yaml'
+                           sh 'kubectl apply -f k8s/volumes/mysql-pvc.yaml'
 
-                        // Deploy Secrets and ConfigMaps
-                        echo 'Deploying Secrets and ConfigMaps...'
-                        sh 'kubectl apply -f k8s/secrets/mysql-secret.yaml'
-                        sh 'kubectl apply -f k8s/configmaps/app-configmap.yaml'
+                           // Deploy Secrets and ConfigMaps
+                           echo 'Deploying Secrets and ConfigMaps...'
+                           sh 'kubectl apply -f k8s/secrets/mysql-secret.yaml'
+                           sh 'kubectl apply -f k8s/configmaps/app-configmap.yaml'
 
-                        // Deploy applications
-                        echo 'Deploying MySQL and Spring Boot applications...'
-                        sh 'kubectl apply -f k8s/deployments/mysql-deployment.yaml'
-                        sh 'kubectl apply -f k8s/deployments/app-deployment.yaml'
+                           // Deploy applications
+                           echo 'Deploying MySQL and Spring Boot applications...'
+                           sh 'kubectl apply -f k8s/deployments/mysql-deployment.yaml'
+                           sh 'kubectl apply -f k8s/deployments/app-deployment.yaml'
 
-                        // Deploy LoadBalancer service
-                        echo 'Deploying LoadBalancer service...'
-                        sh 'kubectl apply -f k8s/services/service.yaml'
+                           // Deploy LoadBalancer service
+                           echo 'Deploying LoadBalancer service...'
+                           sh 'kubectl apply -f k8s/services/service.yaml'
 
-                        // Wait for LoadBalancer IP address
-                        echo 'Waiting for LoadBalancer IP address...'
-                        retry(5) {
-                            sleep 30  // Pause to allow LoadBalancer to initialize
-                            sh 'kubectl get svc springboot-service -o jsonpath="{.status.loadBalancer.ingress[0].ip}"'
-                        }
-                    }
-                }
-            }
-        }
+                           // Wait for LoadBalancer IP address
+                           echo 'Waiting for LoadBalancer IP address...'
+                           retry(5) {
+                               sleep 30  // Pause to allow LoadBalancer to initialize
+                               sh 'kubectl get svc springboot-service -o jsonpath="{.status.loadBalancer.ingress[0].ip}"'
+                           }
+                       }
+                   }
+               }
+           }
+       }
         stage('Monitoring') {
             steps {
                 script {
