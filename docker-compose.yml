@@ -9,6 +9,8 @@ services:
       MYSQL_DATABASE: stationSki
     ports:
       - "3307:3306"
+    networks:
+      - mynetwork
 
   app:
     build: .
@@ -19,6 +21,8 @@ services:
       - db
     environment:
       MYSQL_ROOT_PASSWORD: yourpassword
+    networks:
+      - mynetwork
 
   prometheus:
     image: prom/prometheus
@@ -28,6 +32,8 @@ services:
       - ./prometheus.yml:/etc/prometheus/prometheus.yml
     depends_on:
       - app
+    networks:
+      - mynetwork
 
   grafana:
     image: grafana/grafana
@@ -35,6 +41,11 @@ services:
       - "3000:3000"
     volumes:
       - grafana_data:/var/lib/grafana
+    networks:
+      - mynetwork
 
 volumes:
   grafana_data:
+
+networks:
+  mynetwork:
