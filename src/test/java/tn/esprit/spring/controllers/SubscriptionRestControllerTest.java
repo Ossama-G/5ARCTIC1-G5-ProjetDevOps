@@ -11,13 +11,16 @@ import org.mockito.MockitoAnnotations;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
+import tn.esprit.spring.entities.Instructor;
 import tn.esprit.spring.entities.Subscription;
 import tn.esprit.spring.entities.TypeSubscription;
 import tn.esprit.spring.services.ISubscriptionServices;
 
 import java.time.LocalDate;
+import java.util.*;
 
 import static org.mockito.Mockito.*;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -66,4 +69,23 @@ public class SubscriptionRestControllerTest {
 
         verify(subscriptionServices, times(1)).addSubscription(any(Subscription.class));
     }
+    @Test
+    void getById_ShouldReturnSubscriptionIfExists() throws Exception {
+        Subscription subscription = new Subscription();
+        subscription.setNumSub(1L);
+        subscription.setTypeSub(TypeSubscription.ANNUAL);
+        subscription.setStartDate(LocalDate.now());
+
+        when(subscriptionServices.retrieveSubscriptionById(1L)).thenReturn(subscription);
+
+        mockMvc.perform(get("/subscription/get/1"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.numSub").value(1L))
+                .andExpect(jsonPath("$.typeSub").value("ANNUAL"));
+    }
+
+
+
+
+
 }
