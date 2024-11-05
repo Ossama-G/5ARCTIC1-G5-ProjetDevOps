@@ -19,7 +19,7 @@ pipeline {
                 git branch: 'Oussama-5ARCTIC1-G5', credentialsId: 'github-token', url: 'https://github.com/Ossama-G/5ARCTIC1-G5-ProjetDevOps.git'
             }
         }
-/*
+
         stage('Compile') {
             steps {
                 sh 'mvn clean compile'
@@ -37,9 +37,7 @@ pipeline {
                 sh 'mvn package -DskipTests'
             }
         }
-*/
 
-/*
         stage('Vulnerability Scan Using Trivy on Source Code') {
             steps {
                 script {
@@ -80,8 +78,7 @@ pipeline {
                 }
             }
         }
-*/
-/*
+
       stage('Build Docker Image') {
                   steps {
                       script {
@@ -139,7 +136,7 @@ pipeline {
                       }
                   }
               }
-*/
+
 
         stage('Deploy to AKS') {
             steps {
