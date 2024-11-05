@@ -6,7 +6,7 @@ WORKDIR /app
 COPY . .
 
 # Build the application and create a JAR file
-RUN mvn clean package -DskipTests
+RUN mvn package -DskipTests
 
 # Use the official OpenJDK image to run the application
 FROM openjdk:17-jdk
