@@ -28,20 +28,22 @@ spec:
           image: mysql:5.7
           env:
             - name: MYSQL_ROOT_PASSWORD
-              value: rootpassword
+              value: achref       # Set to match the Spring Boot application
             - name: MYSQL_DATABASE
-              value: skistation  # Updated to match your application database name
+              value: skistation   # Database name to match your application
             - name: MYSQL_USER
-              value: achref      # Updated to match your database username
+              value: achref       # User that matches Spring Boot credentials
+            - name: MYSQL_PASSWORD
+              value: achref       # Password for the MySQL user
           ports:
             - containerPort: 3306
-          volumeMounts:             # Corrected indentation here
+          volumeMounts:
             - mountPath: /var/lib/mysql
               name: mysql-storage
-      volumes:
-        - name: mysql-storage
-          persistentVolumeClaim:
-            claimName: mysql-pvc
+    volumes:
+      - name: mysql-storage
+        persistentVolumeClaim:
+          claimName: mysql-pvc
 ---
 apiVersion: v1
 kind: Service
