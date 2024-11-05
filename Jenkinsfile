@@ -105,34 +105,6 @@ pipeline {
                 }
             }
         }
-        stage('Deploy to AKS') {
-            steps {
-                script {
-                    // Log in to Azure using the managed identity
-                    sh """
-                        az login --identity
-                        az account get-access-token --resource https://management.azure.com --output json > azure_token.json
-                    """
-
-                    // Parse the access token from the JSON file
-                    def azureToken = readJSON file: 'azure_token.json'
-
-                    // Set up kubectl with the access token for Azure AKS access
-                    sh """
-                        # Configure kubectl to use the token for authentication
-                        kubectl config set-credentials azure-user --token=${azureToken.accessToken}
-                        kubectl config set-context --current --user=azure-user
-
-                        # Get AKS credentials without 'az login' using the stored token
-                        az aks get-credentials --resource-group myResourceGroup --name gestionstationaks --overwrite-existing
-
-                        # Apply the Kubernetes manifests using kubectl from the k8s directory
-                        kubectl apply -f k8s/deployment.yaml
-                        kubectl apply -f k8s/service.yaml
-                    """
-                }
-            }
-        }
         stage('Monitoring') {
             steps {
                 script {
