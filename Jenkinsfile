@@ -3,6 +3,11 @@ pipeline {
 
     environment {
         DOCKERHUB_USERNAME = 'abm026'
+        REGISTRY = 'your-registry.azurecr.io'
+        REGISTRY_CREDENTIALS = 'your-registry-credentials-id'
+        AKS_CLUSTER = 'gestionstationaks'
+        RESOURCE_GROUP = 'myResourceGroup'
+        KUBECONFIG_CREDENTIALS = 'kubeconfig-credentials'
     }
 
     stages {
@@ -31,25 +36,14 @@ pipeline {
         stage('Trivy Scan on Source Code') {
             steps {
                 script {
-                    // Create the reports directory once at the beginning
                     sh 'mkdir -p reports'
-
-                    // Retry mechanism for downloading the vulnerability database and scanning
                     def retries = 3
-                    def waitTime = 10 // seconds
-
+                    def waitTime = 10
                     for (int i = 0; i < retries; i++) {
                         try {
-                            // Download the vulnerability database only if it is not present
                             sh '[ -f ~/.cache/trivy/db/trivy.db ] || trivy image --download-db-only'
-
-                            // Scan only relevant directories, excluding some if necessary
                             sh 'trivy fs --format json -o reports/trivy-fs-report.json --ignore-unfixed --skip-dirs node_modules,venv .'
-
-                            // Generate an HTML report from the JSON
                             sh 'python3 $WORKSPACE/src/main/resources/templates/json_to_html.py reports/trivy-fs-report.json reports/trivy-fs-report.html'
-
-                            // Archive the JSON and HTML reports for better traceability
                             archiveArtifacts artifacts: 'reports/trivy-fs-report.json, reports/trivy-fs-report.html', allowEmptyArchive: true
                             break
                         } catch (Exception e) {
@@ -85,7 +79,7 @@ pipeline {
                 }
             }
         }
-        stage('Push Docker Image') {
+        stage('Push Docker Image to dockerhub') {
             steps {
                 script {
                     docker.withRegistry('https://index.docker.io/v1/', 'dockerhub-credentials') {
@@ -94,31 +88,44 @@ pipeline {
                 }
             }
         }
-        stage('Docker Compose Up') {
+        stage('Push Docker Image to ACR') {
             steps {
                 script {
-                    // Bring up the services defined in docker-compose.yml
-                    dir('/home/ahmedbm') {
-                        sh 'docker-compose down --remove-orphans'
-                        sh 'docker-compose up -d'
+                    docker.withRegistry("https://${env.REGISTRY}", env.REGISTRY_CREDENTIALS) {
+                        dockerImage.push()
                     }
                 }
             }
         }
+        stage('Deploy to AKS') {
+            steps {
+                withCredentials([file(credentialsId: env.KUBECONFIG_CREDENTIALS, variable: 'KUBECONFIG')]) {
+                    sh 'kubectl apply -f k8s/secrets/mysql-secret.yaml'
+                    sh 'kubectl apply -f k8s/services/app-service.yaml'
+                    sh 'kubectl apply -f k8s/services/mysql-service.yaml'
+                    sh 'kubectl apply -f k8s/services/springboot-app.yaml'
+                }
+            }
+        }
+        // Commented out Docker Compose part
+        /*
+        stage('Deploy with Docker Compose') {
+            steps {
+                script {
+                    dockerCompose.up()
+                }
+            }
+        }
+        */
         stage('Monitoring') {
             steps {
                 script {
-                    // Add a delay to allow the application to start
                     sleep(time: 30, unit: 'SECONDS')
-
-                    // Check if Prometheus is running and follow redirects
                     def prometheusResponse = sh(script: "curl -L -s -o /dev/null -w '%{http_code}' http://localhost:9090", returnStdout: true).trim()
                     echo "Prometheus response: ${prometheusResponse}"
                     if (prometheusResponse != '200') {
                         error "Prometheus check failed with status code ${prometheusResponse}"
                     }
-
-                    // Check if Grafana is running and follow redirects
                     def grafanaResponse = sh(script: "curl -L -s -o /dev/null -w '%{http_code}' http://localhost:3000", returnStdout: true).trim()
                     echo "Grafana response: ${grafanaResponse}"
                     if (grafanaResponse != '200') {
@@ -126,7 +133,6 @@ pipeline {
                     }
                 }
                 dir('/home/ahmedbm') {
-                    // Fetch the last 100 lines of logs for monitoring
                     sh 'docker-compose logs --tail=100'
                 }
             }
@@ -142,7 +148,6 @@ pipeline {
                 def emoji = '✅'
                 def pipelineStatus = 'SUCCESS'
                 def gradientColor = 'linear-gradient(135deg, #b8e994, #28a745)'
-
                 def body = """
                 <html>
                     <body style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; color: #333; padding: 0; margin: 0;">
@@ -158,7 +163,6 @@ pipeline {
                     </body>
                 </html>
                 """
-
                 try {
                     emailext (
                         subject: "${env.JOB_NAME} - Build ${env.BUILD_NUMBER} - ${pipelineStatus}",
@@ -187,7 +191,6 @@ pipeline {
                 def emoji = '❌'
                 def pipelineStatus = 'FAILURE'
                 def gradientColor = 'linear-gradient(135deg, #e57373, #dc3545)'
-
                 def body = """
                 <html>
                     <body style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; color: #333; padding: 0; margin: 0;">
@@ -203,7 +206,6 @@ pipeline {
                     </body>
                 </html>
                 """
-
                 try {
                     emailext (
                         subject: "${env.JOB_NAME} - Build ${env.BUILD_NUMBER} - ${pipelineStatus}",
