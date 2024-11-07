@@ -4,7 +4,7 @@ pipeline {
     environment {
         DOCKERHUB_USERNAME = 'abm026'
         REGISTRY = 'your-registry.azurecr.io'
-        REGISTRY_CREDENTIALS = 'your-registry-credentials-id'
+        REGISTRY_CREDENTIALS = 'registry-cred'
         AKS_CLUSTER = 'gestionstationaks'
         RESOURCE_GROUP = 'myResourceGroup'
         KUBECONFIG_CREDENTIALS = 'kubeconfig-credentials'
